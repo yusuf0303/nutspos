@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  STORE_MANAGER
+  WAREHOUSE_MANAGER
+  CASHIER
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(CASHIER)
+  branchId  String?
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders    Order[]
+  purchases PurchaseOrder[]
+  shifts    Shift[]
+}
+
+model Branch {
+  id        String      @id @default(cuid())
+  name      String
+  address   String?
+  phone     String?
+  users     User[]
+  orders    Order[]
+  expenses  Expense[]
+  inventory Inventory[]
+  shifts    Shift[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Supplier {
+  id          String    @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  address     String?
+  products    Product[]
+  purchases   PurchaseOrder[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  sku         String   @unique
+  name        String
+  description String?
+  price       Float
+  cost        Float    @default(0)
+  unit        String   @default("dona") // dona, kg, litr, m, m2, quti, juft
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  supplierId  String?
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+  
+  inventory   Inventory[]
+  orderItems  OrderItem[]
+  purchaseItems PurchaseOrderItem[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Inventory {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  quantity    Int      @default(0)
+  location    String   @default("Main Warehouse")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([productId, location])
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  points      Int      @default(0)
+  orders      Order[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Shift {
+  id           String    @id @default(cuid())
+  branchId     String
+  branch       Branch    @relation(fields: [branchId], references: [id])
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  startTime    DateTime  @default(now())
+  endTime      DateTime?
+  startingCash Float
+  endingCash   Float?
+  expectedCash Float?
+  status       String    @default("OPEN") // OPEN, CLOSED
+  orders       Order[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  userId      String      // Cashier
+  user        User        @relation(fields: [userId], references: [id])
+  branchId    String?
+  branch      Branch?     @relation(fields: [branchId], references: [id])
+  shiftId     String?
+  shift       Shift?      @relation(fields: [shiftId], references: [id])
+  customerId  String?
+  customer    Customer?   @relation(fields: [customerId], references: [id])
+  totalAmount Float
+  status      String      @default("COMPLETED") // COMPLETED, REFUNDED
+  paymentType String      @default("CASH") // CASH, CARD, CLICK, SPLIT
+  cashAmount  Float       @default(0)
+  cardAmount  Float       @default(0)
+  clickAmount Float       @default(0)
+  cashbackUsed Float      @default(0)
+  discount    Float       @default(0)
+  
+  items       OrderItem[]
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  quantity    Int
+  price       Float    // Price at the time of sale
+  cost        Float    @default(0) // Cost price at the time of sale (for profit tracking)
+  discount    Float    @default(0) // Per-item discount
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PurchaseOrder {
+  id          String   @id @default(cuid())
+  userId      String   // Created by
+  user        User     @relation(fields: [userId], references: [id])
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  totalAmount Float
+  status      String   @default("PENDING") // PENDING, RECEIVED, CANCELLED
+  items       PurchaseOrderItem[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PurchaseOrderItem {
+  id              String        @id @default(cuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product       @relation(fields: [productId], references: [id])
+  quantity        Int
+  cost            Float         // Cost price at the time of purchase
+  createdAt       DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  branchId    String?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  description String
+  amount      Float
+  category    String   // Rent, Salary, Utility, Other
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model GlobalSetting {
+  key   String @id
+  value String
+}
+
