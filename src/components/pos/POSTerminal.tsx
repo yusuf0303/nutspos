@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { createOrder } from '@/app/actions/orderActions';
+import { createOrder, refundOrder, getOrderById, getRecentOrders } from '@/app/actions/orderActions';
 import { createCustomer } from '@/app/actions/customerActions';
 import { getSetting } from '@/app/actions/settingActions';
 import { useLanguage } from '@/context/LanguageContext';
@@ -71,6 +71,11 @@ export default function POSTerminal({
     const [editMode, setEditMode] = useState<'QUANTITY' | 'PRICE'>('QUANTITY');
     const [tempQuantity, setTempQuantity] = useState<string>('');
     const [tempPrice, setTempPrice] = useState<string>('');
+    const [showLookupModal, setShowLookupModal] = useState(false);
+    const [lookupId, setLookupId] = useState('');
+    const [foundOrder, setFoundOrder] = useState<any>(null);
+    const [isSearchingOrder, setIsSearchingOrder] = useState(false);
+    const [recentOrders, setRecentOrders] = useState<any[]>([]);
 
     useEffect(() => {
         const checkShift = async () => {
@@ -263,7 +268,20 @@ export default function POSTerminal({
         });
         setIsProcessing(false);
         if (result.success) {
-            setLastOrder({ cart: [...cart], total, customerId, paymentType, cashAmount, cardAmount, clickAmount, globalDiscount, globalDiscountType, globalDiscountAmount, cashbackUsed: spentCashback });
+            setLastOrder({ 
+                id: result.order.id,
+                cart: [...cart], 
+                total, 
+                customerId, 
+                paymentType, 
+                cashAmount, 
+                cardAmount, 
+                clickAmount, 
+                globalDiscount, 
+                globalDiscountType, 
+                globalDiscountAmount, 
+                cashbackUsed: spentCashback 
+            });
             setShowReceipt(true);
             showToast("Savdo muvaffaqiyatli yakunlandi!", "success");
 
@@ -319,6 +337,42 @@ export default function POSTerminal({
         setGlobalDiscountType(order.globalDiscountType);
         setHeldOrders(prev => prev.filter(o => o.id !== order.id));
         setShowHeldOrders(false);
+    };
+
+    const handleLookup = async () => {
+        if (!lookupId) {
+            // If empty, load recent orders
+            const res = await getRecentOrders(user.branchId);
+            if (res.success) setRecentOrders(res.orders || []);
+            return;
+        }
+        setIsSearchingOrder(true);
+        const res = await getOrderById(lookupId);
+        setIsSearchingOrder(false);
+        if (res.success && res.order) {
+            setFoundOrder(res.order);
+        } else {
+            showToast("Chek topilmadi", "error");
+            setFoundOrder(null);
+        }
+    };
+
+    const handleRefund = async (orderId: string) => {
+        if (!confirm("Haqiqatan ham ushbu chekni vozvrat qilmoqchimisiz? Mahsulotlar omborga qaytadi.")) return;
+        
+        setIsProcessing(true);
+        const res = await refundOrder(orderId);
+        setIsProcessing(false);
+        
+        if (res.success) {
+            showToast("Vozvrat muvaffaqiyatli amalga oshirildi", "success");
+            setShowLookupModal(false);
+            setFoundOrder(null);
+            setLookupId('');
+            router.refresh();
+        } else {
+            showToast("Xato: " + res.error, "error");
+        }
     };
 
     useEffect(() => {
@@ -499,6 +553,7 @@ export default function POSTerminal({
                                 <h3 style={{ margin: '0 0 0.25rem' }}>NUTS POS</h3>
                                 <div style={{ fontSize: '0.75rem', color: '#666' }}>Savdo Cheki</div>
                                 <div style={{ fontSize: '0.75rem', color: '#666' }}>{new Date().toLocaleString('uz-UZ')}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 'bold', marginTop: '0.25rem' }}>Chek ID: {lastOrder.id}</div>
                             </div>
                             {selectedCustomer && (
                                 <div style={{ fontSize: '0.75rem', borderTop: '1px dashed #ccc', borderBottom: '1px dashed #ccc', padding: '0.5rem 0', margin: '0.5rem 0', color: '#444' }}>
@@ -795,6 +850,117 @@ export default function POSTerminal({
                 </div>
             )}
 
+            {/* =========================  RECEIPT LOOKUP MODAL  ========================= */}
+            {showLookupModal && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, backdropFilter: 'blur(4px)' }}>
+                    <div className="card" style={{ background: 'var(--bg-secondary)', width: '550px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-xl)', overflow: 'hidden', animation: 'fadeIn 0.2s ease-out' }}>
+                        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-tertiary)' }}>
+                            <h3 style={{ margin: 0, fontSize: '1.15rem', color: 'var(--text-primary)', fontWeight: 700 }}>🔍 Chek Qidirish & Vozvrat</h3>
+                            <button onClick={() => { setShowLookupModal(false); setFoundOrder(null); setLookupId(''); }} style={{ background: 'transparent', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+                        </div>
+                        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', overflowY: 'auto' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <input 
+                                    type="text" 
+                                    value={lookupId} 
+                                    onChange={e => setLookupId(e.target.value)} 
+                                    placeholder="Chek ID sini kiriting (masalan: cm...)" 
+                                    style={{ flex: 1, padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)', outline: 'none' }}
+                                    onKeyDown={e => e.key === 'Enter' && handleLookup()}
+                                />
+                                <button onClick={handleLookup} disabled={isSearchingOrder} style={{ padding: '0.75rem 1.5rem', background: 'var(--accent-primary)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', fontWeight: 700, cursor: 'pointer' }}>
+                                    {isSearchingOrder ? '...' : 'Qidirish'}
+                                </button>
+                            </div>
+
+                            {!foundOrder && recentOrders.length > 0 && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                    <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>Oxirgi urilgan cheklar:</h4>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto' }}>
+                                        {recentOrders.map((ro: any) => (
+                                            <div 
+                                                key={ro.id} 
+                                                onClick={() => setFoundOrder(ro)}
+                                                style={{ padding: '0.75rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.2s' }}
+                                            >
+                                                <div>
+                                                    <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{ro.totalAmount.toLocaleString()} so'm</div>
+                                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{new Date(ro.createdAt).toLocaleTimeString()} • {ro.customer?.name || 'Mijozsiz'}</div>
+                                                </div>
+                                                <div style={{ fontSize: '0.7rem', background: 'var(--bg-secondary)', padding: '0.2rem 0.5rem', borderRadius: '4px', color: 'var(--text-muted)' }}>
+                                                    #{ro.id.slice(-6)}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {!foundOrder && recentOrders.length === 0 && !isSearchingOrder && (
+                                <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                                    Chek ID sini kiriting yoki oxirgi cheklarni ko'rish uchun qidiruv tugmasini bosing
+                                </div>
+                            )}
+
+                            {foundOrder && (
+                                <button 
+                                    onClick={() => { setFoundOrder(null); setLookupId(''); handleLookup(); }} 
+                                    style={{ alignSelf: 'flex-start', background: 'transparent', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0' }}
+                                >
+                                    ← Orqaga qaytish
+                                </button>
+                            )}
+
+                            {foundOrder && (
+                                <div style={{ background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+                                    <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Sana: {new Date(foundOrder.createdAt).toLocaleString()}</div>
+                                            <div style={{ fontWeight: 700 }}>Jami: {foundOrder.totalAmount.toLocaleString()} so'm</div>
+                                            <div style={{ fontSize: '0.75rem', marginTop: '0.25rem', color: 'var(--accent-primary)', fontWeight: 600 }}>
+                                                {foundOrder.paymentType === 'CASH' ? '💵 Naqd pul' : 
+                                                 foundOrder.paymentType === 'CARD' ? '💳 Plastik karta' : 
+                                                 foundOrder.paymentType === 'CLICK' ? '📱 Click / Payme' : 
+                                                 '🔀 Aralash to\'lov'}
+                                            </div>
+                                        </div>
+                                        <div style={{ 
+                                            padding: '0.25rem 0.6rem', 
+                                            borderRadius: '999px', 
+                                            fontSize: '0.75rem', 
+                                            fontWeight: 700,
+                                            background: foundOrder.status === 'COMPLETED' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                            color: foundOrder.status === 'COMPLETED' ? 'var(--success)' : 'var(--danger)'
+                                        }}>
+                                            {foundOrder.status === 'COMPLETED' ? 'YAKUNLANGAN' : 'VOZVRAT QILINGAN'}
+                                        </div>
+                                    </div>
+                                    <div style={{ padding: '1rem', maxHeight: '250px', overflowY: 'auto' }}>
+                                        {foundOrder.items.map((item: any, i: number) => (
+                                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+                                                <span>{item.product?.name} x{item.quantity}</span>
+                                                <span>{(item.price * item.quantity).toLocaleString()}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {foundOrder.status === 'COMPLETED' && (
+                                        <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.05)', borderTop: '1px solid var(--border-color)' }}>
+                                            <button 
+                                                onClick={() => handleRefund(foundOrder.id)}
+                                                disabled={isProcessing}
+                                                style={{ width: '100%', padding: '0.75rem', background: 'var(--danger)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', fontWeight: 700, cursor: 'pointer' }}
+                                            >
+                                                {isProcessing ? 'Bajarilmoqda...' : '♻️ Vozvrat Qilish'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* =========================  LEFT PANEL – Products  ========================= */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 {/* Top Bar */}
@@ -816,6 +982,9 @@ export default function POSTerminal({
                             <span style={{ background: '#fff', color: 'var(--warning)', padding: '0.1rem 0.4rem', borderRadius: '99px', fontSize: '0.75rem' }}>{heldOrders.length}</span>
                         </button>
                     )}
+                    <button onClick={() => setShowLookupModal(true)} style={{ padding: '0.5rem 1rem', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        🔍 Cheklar
+                    </button>
                     <button onClick={toggleFullscreen} style={{ padding: '0.5rem 0.75rem', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="To'liq ekran">
                         {isFullscreen ? '⛕' : '⛶'}
                     </button>

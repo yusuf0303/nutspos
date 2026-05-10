@@ -2,18 +2,24 @@
 
 import { useState, Fragment } from 'react';
 import Link from 'next/link';
+import RefundButton from '../sales/RefundButton';
 
-export default function ShiftDetail({ shift }: { shift: any }) {
+export default function ShiftDetail({ shift, backUrl = '/warehouse/shifts' }: { shift: any, backUrl?: string }) {
     const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
 
     const toggleOrder = (orderId: string) => {
         setExpandedOrders(prev => ({ ...prev, [orderId]: !prev[orderId] }));
     };
+    const completedOrders = shift.orders.filter((o: any) => o.status === 'COMPLETED');
+    const refundedOrders = shift.orders.filter((o: any) => o.status === 'REFUNDED');
+
     const stats = {
-        total: shift.orders.reduce((acc: number, o: any) => acc + o.totalAmount, 0),
-        cash: shift.orders.reduce((acc: number, o: any) => acc + o.cashAmount, 0),
-        card: shift.orders.reduce((acc: number, o: any) => acc + o.cardAmount, 0),
-        click: shift.orders.reduce((acc: number, o: any) => acc + o.clickAmount, 0),
+        total: completedOrders.reduce((acc: number, o: any) => acc + o.totalAmount, 0),
+        cash: completedOrders.reduce((acc: number, o: any) => acc + o.cashAmount, 0),
+        card: completedOrders.reduce((acc: number, o: any) => acc + o.cardAmount, 0),
+        click: completedOrders.reduce((acc: number, o: any) => acc + o.clickAmount, 0),
+        refundCount: refundedOrders.length,
+        refundTotal: refundedOrders.reduce((acc: number, o: any) => acc + o.totalAmount, 0),
     };
 
     return (
@@ -21,7 +27,7 @@ export default function ShiftDetail({ shift }: { shift: any }) {
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <Link href="/warehouse/shifts" style={{ color: 'var(--accent-primary)', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 600 }}>← Smenalar ro'yxatiga qaytish</Link>
+                    <Link href={backUrl} style={{ color: 'var(--accent-primary)', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 600 }}>← Smenalar ro'yxatiga qaytish</Link>
                     <h1 style={{ fontSize: '2rem', marginTop: '0.5rem' }}>Smena Tafsilotlari: #{shift.id.slice(-6)}</h1>
                 </div>
                 <div style={{ padding: '0.5rem 1rem', borderRadius: '999px', fontSize: '0.875rem', fontWeight: 700, background: shift.status === 'OPEN' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(107, 114, 128, 0.1)', color: shift.status === 'OPEN' ? 'var(--success)' : 'var(--text-muted)' }}>
@@ -30,22 +36,26 @@ export default function ShiftDetail({ shift }: { shift: any }) {
             </div>
 
             {/* Stats Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-                <div className="card" style={{ padding: '1.5rem' }}>
-                    <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Jami Savdo</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{stats.total.toLocaleString()} <span style={{ fontSize: '0.9rem' }}>so'm</span></div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+                <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 500 }}>Jami Savdo</div>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 800 }}>{stats.total.toLocaleString()} <span style={{ fontSize: '1rem' }}>so'm</span></div>
                 </div>
-                <div className="card" style={{ padding: '1.5rem' }}>
-                    <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Naqd pul</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>{stats.cash.toLocaleString()} <span style={{ fontSize: '0.9rem' }}>so'm</span></div>
+                <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 500 }}>Naqd pul</div>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--success)' }}>{stats.cash.toLocaleString()} <span style={{ fontSize: '1rem' }}>so'm</span></div>
                 </div>
-                <div className="card" style={{ padding: '1.5rem' }}>
-                    <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Plastik karta</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent-primary)' }}>{stats.card.toLocaleString()} <span style={{ fontSize: '0.9rem' }}>so'm</span></div>
+                <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 500 }}>Plastik karta</div>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent-primary)' }}>{stats.card.toLocaleString()} <span style={{ fontSize: '1rem' }}>so'm</span></div>
                 </div>
-                <div className="card" style={{ padding: '1.5rem' }}>
-                    <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Click / Payme</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent-secondary)' }}>{stats.click.toLocaleString()} <span style={{ fontSize: '0.9rem' }}>so'm</span></div>
+                <div className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 500 }}>Click / Payme</div>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent-secondary)' }}>{stats.click.toLocaleString()} <span style={{ fontSize: '1rem' }}>so'm</span></div>
+                </div>
+                <div className="card" style={{ padding: '1.5rem', borderLeft: '5px solid var(--danger)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 500 }}>Vozvratlar</div>
+                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--danger)' }}>{stats.refundCount} ta / {stats.refundTotal.toLocaleString()} <span style={{ fontSize: '1rem' }}>so'm</span></div>
                 </div>
             </div>
 
@@ -117,7 +127,7 @@ export default function ShiftDetail({ shift }: { shift: any }) {
                                         <td style={{ padding: '1rem', color: 'var(--accent-secondary)' }}>{order.clickAmount.toLocaleString()}</td>
                                         <td style={{ padding: '1rem' }}>
                                             <span style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, background: order.status === 'COMPLETED' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: order.status === 'COMPLETED' ? 'var(--success)' : 'var(--danger)' }}>
-                                                {order.status === 'COMPLETED' ? 'MUVAFFAQIYATLI' : 'BEKOR QILINGAN'}
+                                                {order.status === 'COMPLETED' ? 'MUVAFFAQIYATLI' : order.status === 'REFUNDED' ? 'VOZVRAT QILINGAN' : 'BEKOR QILINGAN'}
                                             </span>
                                         </td>
                                         <td style={{ padding: '1rem', fontSize: '1.25rem' }}>
@@ -129,7 +139,12 @@ export default function ShiftDetail({ shift }: { shift: any }) {
                                             <td colSpan={8} style={{ padding: '1rem 2rem' }}>
                                                 <div style={{ background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', padding: '1rem', border: '1px solid var(--border-color)' }}>
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                                                        <h4 style={{ margin: 0, fontSize: '0.9rem' }}>Sotilgan mahsulotlar:</h4>
+                                                        <div>
+                                                            <h4 style={{ margin: 0, fontSize: '0.9rem' }}>Sotilgan mahsulotlar:</h4>
+                                                            <div style={{ width: '200px', marginTop: '0.5rem' }}>
+                                                                <RefundButton orderId={order.id} status={order.status} />
+                                                            </div>
+                                                        </div>
                                                         <div style={{ textAlign: 'right', fontSize: '0.85rem' }}>
                                                             {order.discount > 0 && <div style={{ color: 'var(--danger)' }}>Chegirma: -{order.discount.toLocaleString()} so'm</div>}
                                                             {order.cashbackUsed > 0 && <div style={{ color: 'var(--accent-primary)' }}>Keshbek: -{order.cashbackUsed.toLocaleString()} so'm</div>}

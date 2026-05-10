@@ -95,16 +95,21 @@ export async function getCurrentShift(branchId: string) {
 
 export async function getShiftStats(shiftId: string) {
     try {
-        const orders = await prisma.order.findMany({
-            where: { shiftId, status: 'COMPLETED' }
+        const allOrders = await prisma.order.findMany({
+            where: { shiftId }
         });
 
+        const completedOrders = allOrders.filter(o => o.status === 'COMPLETED');
+        const refundedOrders = allOrders.filter(o => o.status === 'REFUNDED');
+
         const stats = {
-            totalAmount: orders.reduce((s, o) => s + o.totalAmount, 0),
-            cashAmount: orders.reduce((s, o) => s + o.cashAmount, 0),
-            cardAmount: orders.reduce((s, o) => s + o.cardAmount, 0),
-            clickAmount: orders.reduce((s, o) => s + o.clickAmount, 0),
-            orderCount: orders.length
+            totalAmount: completedOrders.reduce((s, o) => s + o.totalAmount, 0),
+            cashAmount: completedOrders.reduce((s, o) => s + o.cashAmount, 0),
+            cardAmount: completedOrders.reduce((s, o) => s + o.cardAmount, 0),
+            clickAmount: completedOrders.reduce((s, o) => s + o.clickAmount, 0),
+            orderCount: completedOrders.length,
+            refundCount: refundedOrders.length,
+            refundAmount: refundedOrders.reduce((s, o) => s + o.totalAmount, 0),
         };
 
         return { success: true, stats };

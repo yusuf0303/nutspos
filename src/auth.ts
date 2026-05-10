@@ -32,8 +32,13 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
                 );
 
                 if (passwordsMatch) {
-                    // You may want to cast this or manage the session types correctly
-                    return { id: user.id, name: user.name, email: user.email, role: user.role } as any;
+                    return { 
+                        id: user.id, 
+                        name: user.name, 
+                        email: user.email, 
+                        role: user.role,
+                        branchId: user.branchId 
+                    } as any;
                 }
 
                 return null;

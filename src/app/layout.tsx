@@ -15,8 +15,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="uz">
-      <body>
+    <html lang="uz" suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <ToastProvider>
           <LanguageProvider>
             <main>{children}</main>

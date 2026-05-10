@@ -4,32 +4,62 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { getSetting } from './settingActions';
 
-export async function cancelOrder(orderId: string) {
+export async function refundOrder(orderId: string) {
     try {
-        // Run everything in a transaction to ensure integrity
         await prisma.$transaction(async (tx: any) => {
             const order = await tx.order.findUnique({
                 where: { id: orderId },
                 include: { items: true }
             });
 
-            if (!order || order.status === 'CANCELLED') {
-                throw new Error("Buyurtma topilmadi yoki allaqachon bekor qilingan");
+            if (!order || order.status === 'REFUNDED') {
+                throw new Error("Buyurtma topilmadi yoki allaqachon qaytarilgan");
             }
 
             // 1. Update order status
             await tx.order.update({
                 where: { id: orderId },
-                data: { status: 'CANCELLED' }
+                data: { status: 'REFUNDED' }
             });
 
-            // 2. Restore inventory for each item
+            // 2. Restore inventory for each item at the CORRECT branch
             for (const item of order.items) {
-                await tx.inventory.update({
-                    where: { productId: item.productId },
+                // Find inventory for this specific branch
+                const inventory = await tx.inventory.findFirst({
+                    where: {
+                        productId: item.productId,
+                        branchId: order.branchId
+                    }
+                });
+
+                if (inventory) {
+                    await tx.inventory.update({
+                        where: { id: inventory.id },
+                        data: {
+                            quantity: {
+                                increment: item.quantity
+                            }
+                        }
+                    });
+                }
+            }
+
+            // 3. Reverse customer points if applicable
+            if (order.customerId) {
+                const cashbackPercentStr = await getSetting('CASHBACK_PERCENT', '1');
+                const cashbackPercent = parseFloat(cashbackPercentStr) / 100;
+                
+                const pointsEarned = Math.round(order.totalAmount * cashbackPercent);
+                const pointsSpent = order.cashbackUsed || 0;
+                
+                // Deduction = Points earned should be removed, points spent should be returned
+                const netPointsAdjustment = pointsSpent - pointsEarned;
+
+                await tx.customer.update({
+                    where: { id: order.customerId },
                     data: {
-                        quantity: {
-                            increment: item.quantity
+                        points: {
+                            increment: netPointsAdjustment
                         }
                     }
                 });
@@ -38,6 +68,8 @@ export async function cancelOrder(orderId: string) {
 
         revalidatePath('/warehouse/sales');
         revalidatePath('/warehouse/inventory');
+        revalidatePath('/pos');
+        revalidatePath('/pos/history');
         revalidatePath('/warehouse');
 
         return { success: true };
@@ -147,9 +179,49 @@ export async function createOrder(data: {
         revalidatePath('/warehouse/products');
         revalidatePath('/warehouse');
 
-        return { success: true, orderId: order.order.id, newPoints: order.newPoints };
+        return { success: true, order: order.order, newPoints: order.newPoints };
     } catch (error: any) {
         console.error("Checkout Error:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function getOrderById(id: string) {
+    try {
+        const order = await prisma.order.findUnique({
+            where: { id },
+            include: {
+                customer: true,
+                items: {
+                    include: {
+                        product: true
+                    }
+                }
+            }
+        });
+        return { success: true, order };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+export async function getRecentOrders(branchId: string, limit: number = 10) {
+    try {
+        const orders = await prisma.order.findMany({
+            where: { branchId },
+            orderBy: { createdAt: 'desc' },
+            take: limit,
+            include: {
+                customer: true,
+                items: {
+                    include: {
+                        product: true
+                    }
+                }
+            }
+        });
+        return { success: true, orders };
+    } catch (error: any) {
         return { success: false, error: error.message };
     }
 }

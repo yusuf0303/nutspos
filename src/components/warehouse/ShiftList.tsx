@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
-export default function ShiftList({ initialShifts }: { initialShifts: any[] }) {
+export default function ShiftList({ initialShifts, linkPrefix = '/warehouse/shifts' }: { initialShifts: any[], linkPrefix?: string }) {
     const [shifts] = useState(initialShifts);
 
     const getStatusStyle = (status: string) => {
@@ -75,7 +75,7 @@ export default function ShiftList({ initialShifts }: { initialShifts: any[] }) {
                                         </span>
                                     </td>
                                     <td style={{ padding: '1rem' }}>
-                                        <Link href={`/warehouse/shifts/${shift.id}`} className="btn btn-secondary" style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }}>
+                                        <Link href={`${linkPrefix}/${shift.id}`} className="btn btn-secondary" style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }}>
                                             👁 Ko'rish
                                         </Link>
                                     </td>

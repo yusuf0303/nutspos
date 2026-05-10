@@ -148,17 +148,25 @@ export default function ShiftDashboard({ user }: { user: any }) {
                             <>
                                 {/* Active Shift Stats */}
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
-                                    <div className="card" style={{ padding: '1.5rem', background: 'var(--bg-secondary)' }}>
-                                        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>💵 Naqd savdo</div>
-                                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)' }}>{(stats?.cashAmount || 0).toLocaleString()} <span style={{ fontSize: '0.9rem' }}>so'm</span></div>
+                                    <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderBottom: '4px solid var(--success)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>💵 Naqd savdo</div>
+                                        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--success)' }}>{(stats?.cashAmount || 0).toLocaleString()} <span style={{ fontSize: '1rem' }}>so'm</span></div>
                                     </div>
-                                    <div className="card" style={{ padding: '1.5rem', background: 'var(--bg-secondary)' }}>
-                                        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>💳 Karta / Click</div>
-                                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent-primary)' }}>{((stats?.cardAmount || 0) + (stats?.clickAmount || 0)).toLocaleString()} <span style={{ fontSize: '0.9rem' }}>so'm</span></div>
+                                    <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderBottom: '4px solid var(--accent-primary)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>💳 Plastik karta</div>
+                                        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent-primary)' }}>{(stats?.cardAmount || 0).toLocaleString()} <span style={{ fontSize: '1rem' }}>so'm</span></div>
                                     </div>
-                                    <div className="card" style={{ padding: '1.5rem', background: 'var(--bg-secondary)' }}>
-                                        <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>🧾 Cheklar soni</div>
-                                        <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{stats?.orderCount || 0} ta</div>
+                                    <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderBottom: '4px solid var(--accent-secondary)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>📱 Click / Payme</div>
+                                        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent-secondary)' }}>{(stats?.clickAmount || 0).toLocaleString()} <span style={{ fontSize: '1rem' }}>so'm</span></div>
+                                    </div>
+                                    <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderBottom: '4px solid var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>🧾 Cheklar</div>
+                                        <div style={{ fontSize: '1.75rem', fontWeight: 800 }}>{stats?.orderCount || 0} <span style={{ fontSize: '1rem' }}>ta</span></div>
+                                    </div>
+                                    <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderBottom: '4px solid var(--danger)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>♻️ Vozvratlar</div>
+                                        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--danger)' }}>{stats?.refundCount || 0} <span style={{ fontSize: '1rem' }}>ta</span> / {(stats?.refundAmount || 0).toLocaleString()} <span style={{ fontSize: '1rem' }}>so'm</span></div>
                                     </div>
                                 </div>
 
@@ -183,6 +191,11 @@ export default function ShiftDashboard({ user }: { user: any }) {
                                         <div>
                                             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Jami savdo summasi:</div>
                                             <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>{(stats?.totalAmount || 0).toLocaleString()} so'm</div>
+                                        </div>
+                                        <div style={{ width: '1px', background: 'var(--border-color)' }}></div>
+                                        <div>
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Vozvrat:</div>
+                                            <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--danger)' }}>{(stats?.refundAmount || 0).toLocaleString()} so'm</div>
                                         </div>
                                     </div>
 
@@ -222,10 +235,29 @@ export default function ShiftDashboard({ user }: { user: any }) {
                             </div>
                         </div>
 
-                        <div style={{ background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', padding: '1.5rem', border: '1px dashed var(--border-color)' }}>
+                        <div style={{ background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', padding: '1.5rem', border: '1px dashed var(--border-color)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
                                 💡 Smenani yopishdan oldin barcha cheklar urilganini va kassa yopilayotgandagi naqd pulni aniq kiritishingizni so'raymiz.
                             </p>
+                            <Link 
+                                href="/pos/history" 
+                                style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '0.5rem', 
+                                    fontSize: '0.9rem', 
+                                    color: 'var(--accent-primary)', 
+                                    textDecoration: 'none', 
+                                    fontWeight: 600,
+                                    marginTop: '0.5rem',
+                                    padding: '0.5rem',
+                                    borderRadius: 'var(--radius-sm)',
+                                    background: 'rgba(59, 130, 246, 0.05)',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                📜 Smenalar Tarixi
+                            </Link>
                         </div>
                     </div>
                 </div>

@@ -3,17 +3,22 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { Role } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 export async function createEmployee(data: {
     name: string;
     email: string;
-    password: string; // In a real app, this should be hashed
+    password: string;
     role: Role;
     branchId?: string;
 }) {
     try {
+        const hashedPassword = await bcrypt.hash(data.password, 10);
         const employee = await prisma.user.create({
-            data
+            data: {
+                ...data,
+                password: hashedPassword
+            }
         });
 
         revalidatePath('/warehouse/employees');

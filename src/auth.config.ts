@@ -18,9 +18,18 @@ export const authConfig = {
             }
             return true;
         },
+        jwt({ token, user }) {
+            if (user) {
+                token.role = (user as any).role;
+                token.branchId = (user as any).branchId;
+            }
+            return token;
+        },
         session({ session, token }) {
             if (token.sub && session.user) {
                 session.user.id = token.sub;
+                (session.user as any).role = token.role;
+                (session.user as any).branchId = token.branchId;
             }
             return session;
         },

@@ -20,7 +20,7 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
     // ... existing code ...
     // (Wait, I should be careful not to overwrite the whole file incorrectly)
     // Let's just target the button.
-    let stats = { products: 0, categories: 0, lowStock: 0, dailySales: 0, dailyOrders: 0, dailyCOGS: 0, dailyExpenses: 0, inventoryValuation: 0 };
+    let stats = { products: 0, categories: 0, lowStock: 0, dailySales: 0, dailyOrders: 0, dailyCOGS: 0, dailyExpenses: 0, inventoryValuation: 0, refundCount: 0, refundAmount: 0 };
     let topProducts: any[] = [];
     let chartSalesData: number[] = [];
     let chartLabels: string[] = [];
@@ -33,13 +33,13 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
     let dailyOrdersData: any[] = [];
     let inventory: any[] = [];
     let periodExpensesData: any[] = [];
+    
+    let startD = new Date();
+    startD.setHours(0, 0, 0, 0);
+    let endD = new Date();
+    endD.setHours(23, 59, 59, 999);
 
     try {
-        let startD = new Date();
-        startD.setHours(0, 0, 0, 0);
-        
-        let endD = new Date();
-        endD.setHours(23, 59, 59, 999);
 
         if (period === 'yesterday') {
             startD.setDate(startD.getDate() - 1);
@@ -77,6 +77,16 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
 
         stats.dailySales = dailyOrdersData.reduce((acc, curr) => acc + curr.totalAmount, 0);
         stats.dailyOrders = dailyOrdersData.length;
+
+        // Refund stats
+        const refundOrdersData = await prisma.order.findMany({
+            where: {
+                createdAt: { gte: startD, lte: endD },
+                status: 'REFUNDED'
+            }
+        });
+        stats.refundCount = refundOrdersData.length;
+        stats.refundAmount = refundOrdersData.reduce((acc: number, curr: any) => acc + curr.totalAmount, 0);
 
         // COGS Calculation
         stats.dailyCOGS = dailyOrdersData.reduce((sum, order) => {
@@ -307,6 +317,12 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                     <p style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--accent-secondary)', lineHeight: 1 }}>{stats.inventoryValuation.toLocaleString()} <span style={{ fontSize: '1rem' }}>so'm</span></p>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Kamaygan zaxiralar: {stats.lowStock} ta</div>
                 </Link>
+
+                <Link href={getModalUrl('refunds')} className="card" style={{ borderLeft: '4px solid var(--danger)', display: 'block' }}>
+                    <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textTransform: 'uppercase', marginBottom: '0.75rem' }}>{periodLabel} Vozvratlar</h3>
+                    <p style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--danger)', lineHeight: 1 }}>{stats.refundAmount.toLocaleString()} <span style={{ fontSize: '1rem' }}>so'm</span></p>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>{stats.refundCount} ta tranzaksiya</div>
+                </Link>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
@@ -439,6 +455,7 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                             <h2 style={{ fontSize: '1.5rem' }}>
                                 {showModal === 'sales' && "Savdo Tafsilotlari"}
+                                {showModal === 'refunds' && "Vozvrat Tafsilotlari"}
                                 {showModal === 'gross' && "Yalpi Foyda Hisob-kitobi"}
                                 {showModal === 'net' && "Sof Foyda Hisob-kitobi"}
                                 {showModal === 'inventory' && "Zaxira Qiymati Tafsilotlari"}
@@ -455,7 +472,8 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                                         <div>Naqd: <strong>{dailyOrdersData.reduce((sum, o) => sum + o.cashAmount, 0).toLocaleString()} so'm</strong></div>
                                         <div>Karta: <strong>{dailyOrdersData.reduce((sum, o) => sum + o.cardAmount, 0).toLocaleString()} so'm</strong></div>
                                         <div>Click: <strong>{dailyOrdersData.reduce((sum, o) => sum + o.clickAmount, 0).toLocaleString()} so'm</strong></div>
-                                        <div>Chegirma: <strong>{dailyOrdersData.reduce((sum, o) => sum + o.discount, 0).toLocaleString()} so'm</strong></div>
+                                        <div>Vozvrat: <strong style={{ color: 'var(--danger)' }}>{stats.refundAmount.toLocaleString()} so'm</strong></div>
+                                        <div style={{ gridColumn: 'span 2' }}>Chegirma: <strong>{dailyOrdersData.reduce((sum, o) => sum + o.discount, 0).toLocaleString()} so'm</strong></div>
                                     </div>
                                 </div>
                                 <h4 style={{ marginBottom: '1rem' }}>Oxirgi tranzaksiyalar:</h4>
@@ -467,6 +485,29 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                                         </div>
                                     ))}
                                     {dailyOrdersData.length > 10 && <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Va yana {dailyOrdersData.length - 10} ta tranzaksiya...</p>}
+                                </div>
+                            </div>
+                        )}
+
+                        {showModal === 'refunds' && (
+                            <div>
+                                <div style={{ background: 'var(--bg-tertiary)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
+                                    <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Tanlangan davrdagi vozvratlar:</p>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--danger)' }}>{stats.refundAmount.toLocaleString()} so'm</div>
+                                    <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{stats.refundCount} ta tranzaksiya</div>
+                                </div>
+                                <h4 style={{ marginBottom: '1rem' }}>Oxirgi vozvratlar:</h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                    {(await prisma.order.findMany({
+                                        where: { status: 'REFUNDED', createdAt: { gte: startD, lte: endD } },
+                                        orderBy: { createdAt: 'desc' },
+                                        take: 20
+                                    })).map((order: any, i: number) => (
+                                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)' }}>
+                                            <span>{order.createdAt.toLocaleTimeString()}</span>
+                                            <span style={{ fontWeight: 600, color: 'var(--danger)' }}>{order.totalAmount.toLocaleString()} so'm</span>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
