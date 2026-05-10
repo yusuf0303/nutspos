@@ -8,6 +8,7 @@ export async function addExpense(data: {
     amount: number;
     category: string;
     date: Date;
+    branchId?: string | null;
 }) {
     try {
         await prisma.expense.create({
@@ -15,7 +16,8 @@ export async function addExpense(data: {
                 description: data.description,
                 amount: data.amount,
                 category: data.category,
-                date: data.date
+                date: data.date,
+                branchId: data.branchId || null
             }
         });
 

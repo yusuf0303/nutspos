@@ -9,10 +9,10 @@ async function main() {
 
     // 1. Users
     const admin = await prisma.user.upsert({
-        where: { email: 'admin@nexus.com' },
+        where: { email: 'admin@nuts.com' },
         update: {},
         create: {
-            email: 'admin@nexus.com',
+            email: 'admin@nuts.com',
             name: 'Super Admin',
             password: hashedPassword,
             role: 'SUPER_ADMIN',
@@ -20,10 +20,10 @@ async function main() {
     })
 
     await prisma.user.upsert({
-        where: { email: 'cashier@nexus.com' },
+        where: { email: 'cashier@nuts.com' },
         update: {},
         create: {
-            email: 'cashier@nexus.com',
+            email: 'cashier@nuts.com',
             name: 'Kassir Jamshid',
             password: hashedPassword,
             role: 'CASHIER',
@@ -136,7 +136,7 @@ async function main() {
 
 
     console.log('✅ Ma\'lumotlar bazasi muvaffaqiyatli to\'ldirildi!')
-    console.log(`   👤 Foydalanuvchilar: admin@nexus.com (parol: password123)`)
+    console.log(`   👤 Foydalanuvchilar: admin@nuts.com (parol: password123)`)
     console.log(`   📦 Mahsulotlar: ${products.length} ta (turli o'lchov birliklar bilan)`)
     console.log(`   👥 Mijozlar: ${customers.length} ta`)
 }

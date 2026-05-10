@@ -26,7 +26,7 @@ export default function LoginPage() {
             <div className="card" style={{ width: '100%', maxWidth: '400px' }}>
                 <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
                     <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Xush Kelibsiz</h1>
-                    <p style={{ color: 'var(--text-secondary)' }}>Nexus POS & Ombor tizimiga kiring</p>
+                    <p style={{ color: 'var(--text-secondary)' }}>NUTS POS & Ombor tizimiga kiring</p>
                 </div>
 
                 <form
@@ -39,7 +39,7 @@ export default function LoginPage() {
                             id="email"
                             name="email"
                             type="email"
-                            placeholder="admin@nexus.com"
+                            placeholder="admin@nuts.com"
                             required
                             style={{
                                 width: '100%',

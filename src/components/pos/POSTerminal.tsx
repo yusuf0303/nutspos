@@ -497,7 +497,7 @@ export default function POSTerminal({
 
                         <div id="print-receipt" style={{ background: '#fff', color: '#111', padding: '1.5rem', borderRadius: 'var(--radius-sm)', border: '1px dashed #ccc', fontFamily: 'monospace', fontSize: '0.85rem' }}>
                             <div style={{ textAlign: 'center', marginBottom: '0.75rem' }}>
-                                <h3 style={{ margin: '0 0 0.25rem' }}>NEXUS POS</h3>
+                                <h3 style={{ margin: '0 0 0.25rem' }}>NUTS POS</h3>
                                 <div style={{ fontSize: '0.75rem', color: '#666' }}>Savdo Cheki</div>
                                 <div style={{ fontSize: '0.75rem', color: '#666' }}>{new Date().toLocaleString('uz-UZ')}</div>
                             </div>

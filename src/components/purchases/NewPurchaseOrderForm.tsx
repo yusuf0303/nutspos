@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 export default function NewPurchaseOrderForm({ suppliers, products }: { suppliers: any[], products: any[] }) {
     const { showToast } = useToast();
     const [supplierId, setSupplierId] = useState('');
-    const [items, setItems] = useState<{ productId: string, quantity: number, cost: number, price: number }[]>([]);
+    const [items, setItems] = useState<{ productId: string, quantity: number | '', cost: number | '', price: number | '' }[]>([]);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
@@ -35,10 +35,17 @@ export default function NewPurchaseOrderForm({ suppliers, products }: { supplier
 
         setLoading(true);
         try {
+            const formattedItems = items.map(item => ({
+                productId: item.productId,
+                quantity: Number(item.quantity) || 0,
+                cost: Number(item.cost) || 0,
+                price: Number(item.price) || 0,
+            }));
+
             const res = await createPurchaseOrder({
                 supplierId,
                 userId: 'clw1234567890', // Placeholder
-                items
+                items: formattedItems
             });
             setLoading(false);
 
@@ -119,8 +126,8 @@ export default function NewPurchaseOrderForm({ suppliers, products }: { supplier
                                     <div style={{ position: 'relative' }}>
                                         <input
                                             type="number"
-                                            value={item.quantity}
-                                            onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value))}
+                                            value={item.quantity === '' ? '' : item.quantity}
+                                            onChange={(e) => updateItem(index, 'quantity', e.target.value === '' ? '' : parseInt(e.target.value))}
                                             min="1"
                                             style={{ width: '100%', padding: '0.5rem', paddingRight: '3rem', borderRadius: '4px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
                                             required
@@ -134,8 +141,8 @@ export default function NewPurchaseOrderForm({ suppliers, products }: { supplier
                                     <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', color: 'var(--text-muted)' }}>Kirim Narxi</label>
                                     <input
                                         type="number"
-                                        value={item.cost}
-                                        onChange={(e) => updateItem(index, 'cost', parseFloat(e.target.value))}
+                                        value={item.cost === '' ? '' : item.cost}
+                                        onChange={(e) => updateItem(index, 'cost', e.target.value === '' ? '' : parseFloat(e.target.value))}
                                         min="0"
                                         style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
                                         required
@@ -145,8 +152,8 @@ export default function NewPurchaseOrderForm({ suppliers, products }: { supplier
                                     <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', color: 'var(--text-muted)' }}>Sotish Narxi</label>
                                     <input
                                         type="number"
-                                        value={item.price}
-                                        onChange={(e) => updateItem(index, 'price', parseFloat(e.target.value))}
+                                        value={item.price === '' ? '' : item.price}
+                                        onChange={(e) => updateItem(index, 'price', e.target.value === '' ? '' : parseFloat(e.target.value))}
                                         min="0"
                                         style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
                                         required

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Nexus POS & Ombor',
+  title: 'NUTS POS & Ombor',
   description: 'Murakkab Savdo Nuqtasi va Ombor Boshqaruv Tizimi',
 };
 

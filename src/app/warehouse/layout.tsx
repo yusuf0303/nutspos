@@ -14,7 +14,7 @@ export default function WarehouseLayout({ children }: { children: React.ReactNod
                 <div style={{ padding: '2rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                         <h2 style={{ fontSize: '1.5rem', fontWeight: 700, background: 'linear-gradient(to right, var(--accent-primary), var(--accent-secondary))', WebkitBackgroundClip: 'text', color: 'transparent' }}>
-                            NEXUS
+                            NUTS
                         </h2>
                         <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{t('warehouseSystem')}</p>
                     </div>

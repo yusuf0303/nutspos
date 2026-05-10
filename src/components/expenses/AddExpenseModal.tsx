@@ -4,14 +4,15 @@ import { useState } from 'react';
 import { addExpense } from '@/app/actions/expenseActions';
 import { useToast } from '@/context/ToastContext';
 
-export default function AddExpenseModal() {
+export default function AddExpenseModal({ branches }: { branches: { id: string, name: string }[] }) {
     const [isOpen, setIsOpen] = useState(false);
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         description: '',
         amount: '',
-        category: 'Rent'
+        category: 'Rent',
+        branchId: ''
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -22,13 +23,14 @@ export default function AddExpenseModal() {
                 description: formData.description,
                 amount: parseFloat(formData.amount),
                 category: formData.category,
-                date: new Date()
+                date: new Date(),
+                branchId: formData.branchId || null
             });
             setLoading(false);
 
             if (result.success) {
                 showToast("Xarajat muvaffaqiyatli saqlandi", "success");
-                setFormData({ description: '', amount: '', category: 'Rent' });
+                setFormData({ description: '', amount: '', category: 'Rent', branchId: '' });
                 setIsOpen(false);
             } else {
                 showToast("Xato: " + result.error, "error");
@@ -67,6 +69,19 @@ export default function AddExpenseModal() {
                             style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
                             required
                         />
+                    </div>
+                    <div style={{ marginBottom: '1rem' }}>
+                        <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Filial</label>
+                        <select
+                            value={formData.branchId}
+                            onChange={e => setFormData({ ...formData, branchId: e.target.value })}
+                            style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                        >
+                            <option value="">Umumiy (Barcha filiallar uchun)</option>
+                            {branches.map(b => (
+                                <option key={b.id} value={b.id}>{b.name}</option>
+                            ))}
+                        </select>
                     </div>
                     <div style={{ marginBottom: '2rem' }}>
                         <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Kategoriya</label>

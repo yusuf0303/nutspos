@@ -4,7 +4,12 @@ import AddExpenseModal from '@/components/expenses/AddExpenseModal';
 
 export default async function ExpensesPage() {
     const expenses = await prisma.expense.findMany({
-        orderBy: { date: 'desc' }
+        orderBy: { date: 'desc' },
+        include: { branch: true }
+    });
+
+    const branches = await prisma.branch.findMany({
+        select: { id: true, name: true }
     });
 
     const totalExpenses = expenses.reduce((acc: number, curr: any) => acc + curr.amount, 0);
@@ -16,7 +21,7 @@ export default async function ExpensesPage() {
                     <h1 style={{ fontSize: '2.25rem', marginBottom: '0.5rem' }}>Xarajatlar Nazorati</h1>
                     <p style={{ color: 'var(--text-secondary)' }}>Ijara, oylik va boshqa operatsion xarajatlarni boshqaring.</p>
                 </div>
-                <AddExpenseModal />
+                <AddExpenseModal branches={branches} />
             </header>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
@@ -31,6 +36,7 @@ export default async function ExpensesPage() {
                     <thead style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>
                         <tr>
                             <th style={{ padding: '1rem', fontWeight: 600 }}>Tavsif</th>
+                            <th style={{ padding: '1rem', fontWeight: 600 }}>Filial</th>
                             <th style={{ padding: '1rem', fontWeight: 600 }}>Kategoriya</th>
                             <th style={{ padding: '1rem', fontWeight: 600 }}>Sana</th>
                             <th style={{ padding: '1rem', fontWeight: 600, textAlign: 'right' }}>Summa</th>
@@ -39,7 +45,7 @@ export default async function ExpensesPage() {
                     <tbody>
                         {expenses.length === 0 ? (
                             <tr>
-                                <td colSpan={4} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                <td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                                     Hali xarajatlar qayd etilmagan.
                                 </td>
                             </tr>
@@ -47,6 +53,7 @@ export default async function ExpensesPage() {
                             expenses.map((exp: any) => (
                                 <tr key={exp.id} className="table-row-hover" style={{ borderBottom: '1px solid var(--border-color)' }}>
                                     <td style={{ padding: '1rem', fontWeight: 500 }}>{exp.description}</td>
+                                    <td style={{ padding: '1rem', fontSize: '0.875rem' }}>{exp.branch ? exp.branch.name : 'Umumiy'}</td>
                                     <td style={{ padding: '1rem' }}>
                                         <span style={{
                                             padding: '0.25rem 0.5rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)',
