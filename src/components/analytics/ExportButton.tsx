@@ -4,7 +4,7 @@ import { exportSalesToCSV } from '@/app/actions/exportActions';
 import { useToast } from '@/context/ToastContext';
 import { useState } from 'react';
 
-export default function ExportButton({ data, filename, type }: { data: any[], filename: string, type: 'CSV' | 'PDF' }) {
+export default function ExportButton({ data, filename, type }: { data?: any[], filename?: string, type?: 'CSV' | 'PDF' }) {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
 
