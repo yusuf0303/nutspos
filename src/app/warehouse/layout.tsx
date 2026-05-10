@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useLanguage } from '@/context/LanguageContext';
+import { logoutAction } from '@/app/actions/authActions';
 
 export default function WarehouseLayout({ children }: { children: React.ReactNode }) {
     const { t, lang } = useLanguage();
@@ -61,10 +62,31 @@ export default function WarehouseLayout({ children }: { children: React.ReactNod
                         {lang === 'uz' ? '⚙️ Sozlamalar' : '⚙️ Settings'}
                     </Link>
                 </nav>
-                <div style={{ padding: '1.5rem 1rem', borderTop: '1px solid var(--border-color)' }}>
-                    <Link href="/pos" className="btn" style={{ width: '100%', justifyContent: 'center' }}>
+                <div style={{ padding: '1rem', borderTop: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <Link href="/pos" className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>
                         {t('openPos')}
                     </Link>
+                    <form action={logoutAction} style={{ width: '100%' }}>
+                        <button 
+                            type="submit"
+                            style={{ 
+                                width: '100%', 
+                                padding: '0.75rem', 
+                                background: 'rgba(239, 68, 68, 0.1)', 
+                                color: 'var(--danger)', 
+                                border: '1px solid rgba(239, 68, 68, 0.2)', 
+                                borderRadius: 'var(--radius-md)', 
+                                fontWeight: 600, 
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.5rem'
+                            }}
+                        >
+                            🚪 {lang === 'uz' ? 'Chiqish' : 'Logout'}
+                        </button>
+                    </form>
                 </div>
             </aside>
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/context/ToastContext';
 import { openShift, closeShift, getCurrentShift, getShiftStats } from '@/app/actions/shiftActions';
 import Link from 'next/link';
+import { logoutAction } from '@/app/actions/authActions';
 
 export default function ShiftDashboard({ user }: { user: any }) {
     const router = useRouter();
@@ -25,7 +26,11 @@ export default function ShiftDashboard({ user }: { user: any }) {
 
     const fetchShiftData = async () => {
         setLoading(true);
-        const res = await getCurrentShift(user.id);
+        if (!user.branchId) {
+            setLoading(false);
+            return;
+        }
+        const res = await getCurrentShift(user.branchId);
         if (res.success && res.shift) {
             setCurrentShift(res.shift);
             const statsRes = await getShiftStats(res.shift.id);
@@ -99,6 +104,25 @@ export default function ShiftDashboard({ user }: { user: any }) {
                             {user.branch?.name || 'Filial biriktirilmagan'} • {new Date().toLocaleDateString('uz-UZ')}
                         </p>
                     </div>
+                    <form action={logoutAction}>
+                        <button 
+                            type="submit"
+                            style={{ 
+                                padding: '0.6rem 1.2rem', 
+                                background: 'rgba(239, 68, 68, 0.1)', 
+                                color: 'var(--danger)', 
+                                border: '1px solid rgba(239, 68, 68, 0.2)', 
+                                borderRadius: 'var(--radius-md)', 
+                                fontWeight: 600, 
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem'
+                            }}
+                        >
+                            🚪 Chiqish
+                        </button>
+                    </form>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem' }}>
@@ -143,7 +167,9 @@ export default function ShiftDashboard({ user }: { user: any }) {
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
                                         <div>
                                             <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Ochiq Smena: #{currentShift.id.slice(-6)}</h3>
-                                            <p style={{ color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>Boshlangan vaqt: {new Date(currentShift.startTime).toLocaleTimeString()}</p>
+                                            <p style={{ color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
+                                                {currentShift.user?.name} tomonidan {new Date(currentShift.startTime).toLocaleTimeString()} da ochilgan
+                                            </p>
                                         </div>
                                         <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', padding: '0.4rem 0.8rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700 }}>FAOL</div>
                                     </div>

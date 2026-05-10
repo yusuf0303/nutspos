@@ -120,7 +120,7 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
             },
             _sum: { quantity: true },
             orderBy: { _sum: { quantity: 'desc' } },
-            take: showMoreTop ? 20 : 5,
+            take: showModal === 'top_products' ? 50 : 5,
         });
 
         topProducts = await Promise.all(topSales.map(async (sale: any) => {
@@ -332,15 +332,15 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                 <div className="card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                         <h3 style={{ fontSize: '1.25rem', margin: 0 }}>Top Mahsulotlar</h3>
-                        <Link href={toggleTopProductsUrl} scroll={false} style={{ fontSize: '0.875rem', color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 500 }}>
-                            {showMoreTop ? 'Kamroq ko\'rsatish \u2191' : 'Ko\'proq ko\'rsatish \u2193'}
+                        <Link href={getModalUrl('top_products')} scroll={false} style={{ fontSize: '0.875rem', color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 500 }}>
+                            Ko'proq ko'rsatish ↓
                         </Link>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {topProducts.length === 0 ? (
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Hali ma'lumot yo'q.</p>
                         ) : (
-                            topProducts.map((p, i) => (
+                            topProducts.slice(0, 5).map((p, i) => (
                                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div style={{ flex: 1 }}>
                                         <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{p.name}</div>
@@ -442,6 +442,7 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                                 {showModal === 'gross' && "Yalpi Foyda Hisob-kitobi"}
                                 {showModal === 'net' && "Sof Foyda Hisob-kitobi"}
                                 {showModal === 'inventory' && "Zaxira Qiymati Tafsilotlari"}
+                                {showModal === 'top_products' && "Eng Ko'p Sotilgan Mahsulotlar"}
                             </h2>
                             <Link href={closeModalUrl} style={{ fontSize: '1.5rem', color: 'var(--text-muted)', textDecoration: 'none' }}>&times;</Link>
                         </div>
@@ -544,6 +545,26 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                                 <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
                                     <span>Jami Zaxira Qiymati:</span>
                                     <span>{stats.inventoryValuation.toLocaleString()} so'm</span>
+                                </div>
+                            </div>
+                        )}
+
+                        {showModal === 'top_products' && (
+                            <div>
+                                <p style={{ marginBottom: '1.5rem', color: 'var(--text-secondary)' }}>Tanlangan davrda eng ko'p sotilgan mahsulotlar (top 50):</p>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                    {topProducts.map((p, i) => (
+                                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontWeight: 600 }}>{p.name}</div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.sku}</div>
+                                            </div>
+                                            <div style={{ padding: '0.25rem 0.75rem', background: 'var(--bg-tertiary)', borderRadius: '4px', fontSize: '0.875rem', fontWeight: 700 }}>
+                                                {p.totalSold} dona
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {topProducts.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Ma'lumot topilmadi.</p>}
                                 </div>
                             </div>
                         )}

@@ -1,10 +1,17 @@
 import { prisma } from '@/lib/prisma';
 import POSTerminal from '@/components/pos/POSTerminal';
 import { redirect } from 'next/navigation';
+import { auth } from '@/auth';
 
 export default async function TerminalPage() {
-    // 1. Get current user
-    const user = await prisma.user.findFirst({
+    // 1. Get current user from session
+    const session = await auth();
+    if (!session?.user?.email) {
+        redirect('/login');
+    }
+
+    const user = await prisma.user.findUnique({
+        where: { email: session.user.email },
         include: { branch: true }
     });
 
@@ -12,10 +19,10 @@ export default async function TerminalPage() {
         redirect('/login');
     }
 
-    // 2. Check for active shift
+    // 2. Check for active shift for the BRANCH
     const activeShift = await prisma.shift.findFirst({
         where: {
-            userId: user.id,
+            branchId: user.branchId || undefined,
             status: 'OPEN'
         }
     });

@@ -72,11 +72,10 @@ export default function POSTerminal({
     const [tempQuantity, setTempQuantity] = useState<string>('');
     const [tempPrice, setTempPrice] = useState<string>('');
 
-    // Get current shift on load to have its ID for orders
     useEffect(() => {
         const checkShift = async () => {
-            if (user?.id) {
-                const res = await getCurrentShift(user.id);
+            if (user?.branchId) {
+                const res = await getCurrentShift(user.branchId);
                 if (res.success && res.shift) {
                     setCurrentShift(res.shift);
                 } else {
@@ -86,7 +85,7 @@ export default function POSTerminal({
             }
         };
         checkShift();
-    }, [user?.id]);
+    }, [user?.branchId]);
     const [isNewInput, setIsNewInput] = useState<boolean>(true);
     const [maxDiscountLimit, setMaxDiscountLimit] = useState(30);
     const [isCreating, setIsCreating] = useState(false);

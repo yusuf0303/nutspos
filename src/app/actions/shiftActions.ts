@@ -9,16 +9,16 @@ export async function openShift(data: {
     startingCash: number;
 }) {
     try {
-        // Check if there's already an open shift for this user or branch
+        // Check if there's already an open shift for this branch
         const existingShift = await prisma.shift.findFirst({
             where: {
-                userId: data.userId,
+                branchId: data.branchId,
                 status: 'OPEN'
             }
         });
 
         if (existingShift) {
-            return { success: false, error: "Sizda allaqachon ochiq smena mavjud!" };
+            return { success: false, error: "Ushbu filialda allaqachon ochiq smena mavjud!" };
         }
 
         const shift = await prisma.shift.create({
@@ -74,16 +74,17 @@ export async function closeShift(shiftId: string, data: {
     }
 }
 
-export async function getCurrentShift(userId: string) {
+export async function getCurrentShift(branchId: string) {
     try {
         const shift = await prisma.shift.findFirst({
             where: {
-                userId,
+                branchId,
                 status: 'OPEN'
             },
             include: { 
                 branch: true,
-                orders: true
+                orders: true,
+                user: true
             }
         });
         return { success: true, shift };
