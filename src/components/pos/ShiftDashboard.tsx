@@ -14,7 +14,7 @@ export default function ShiftDashboard({ user }: { user: any }) {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
-    
+
     // Modals
     const [showOpenModal, setShowOpenModal] = useState(false);
     const [showCloseModal, setShowCloseModal] = useState(false);
@@ -95,7 +95,7 @@ export default function ShiftDashboard({ user }: { user: any }) {
     return (
         <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', padding: '2rem' }}>
             <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-                
+
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
                     <div>
@@ -105,15 +105,15 @@ export default function ShiftDashboard({ user }: { user: any }) {
                         </p>
                     </div>
                     <form action={logoutAction}>
-                        <button 
+                        <button
                             type="submit"
-                            style={{ 
-                                padding: '0.6rem 1.2rem', 
-                                background: 'rgba(239, 68, 68, 0.1)', 
-                                color: 'var(--danger)', 
-                                border: '1px solid rgba(239, 68, 68, 0.2)', 
-                                borderRadius: 'var(--radius-md)', 
-                                fontWeight: 600, 
+                            style={{
+                                padding: '0.6rem 1.2rem',
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                color: 'var(--danger)',
+                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                borderRadius: 'var(--radius-md)',
+                                fontWeight: 600,
                                 cursor: 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -126,10 +126,10 @@ export default function ShiftDashboard({ user }: { user: any }) {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem' }}>
-                    
+
                     {/* Main Content */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        
+
                         {!currentShift ? (
                             <div style={{ background: 'var(--bg-secondary)', borderRadius: 'var(--radius-xl)', padding: '4rem 2rem', textAlign: 'center', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)' }}>
                                 <div style={{ fontSize: '5rem', marginBottom: '1.5rem' }}>🏪</div>
@@ -137,7 +137,7 @@ export default function ShiftDashboard({ user }: { user: any }) {
                                 <p style={{ color: 'var(--text-muted)', maxWidth: '400px', margin: '0 auto 2.5rem' }}>
                                     Savdo qilishni boshlash uchun avval kassada mavjud naqd pulni kiritib smenani oching.
                                 </p>
-                                <button 
+                                <button
                                     onClick={() => setShowOpenModal(true)}
                                     style={{ padding: '1.25rem 3rem', fontSize: '1.1rem', fontWeight: 700, background: 'var(--accent-primary)', color: '#fff', border: 'none', borderRadius: 'var(--radius-lg)', cursor: 'pointer', boxShadow: 'var(--shadow-glow)' }}
                                 >
@@ -181,7 +181,7 @@ export default function ShiftDashboard({ user }: { user: any }) {
                                         </div>
                                         <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', padding: '0.4rem 0.8rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700 }}>FAOL</div>
                                     </div>
-                                    
+
                                     <div style={{ display: 'flex', gap: '2rem', marginBottom: '2rem' }}>
                                         <div>
                                             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Boshlang'ich pul:</div>
@@ -203,7 +203,7 @@ export default function ShiftDashboard({ user }: { user: any }) {
                                         <Link href="/pos/terminal" style={{ flex: 1, padding: '1rem', background: 'var(--accent-primary)', color: '#fff', textDecoration: 'none', borderRadius: 'var(--radius-md)', fontWeight: 700, textAlign: 'center', boxShadow: 'var(--shadow-glow)' }}>
                                             🚀 Sotuvga Kirish
                                         </Link>
-                                        <button 
+                                        <button
                                             onClick={() => setShowCloseModal(true)}
                                             style={{ flex: 1, padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: 'var(--radius-md)', fontWeight: 600, cursor: 'pointer' }}
                                         >
@@ -239,15 +239,15 @@ export default function ShiftDashboard({ user }: { user: any }) {
                             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
                                 💡 Smenani yopishdan oldin barcha cheklar urilganini va kassa yopilayotgandagi naqd pulni aniq kiritishingizni so'raymiz.
                             </p>
-                            <Link 
-                                href="/pos/history" 
-                                style={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: '0.5rem', 
-                                    fontSize: '0.9rem', 
-                                    color: 'var(--accent-primary)', 
-                                    textDecoration: 'none', 
+                            <Link
+                                href="/pos/history"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    fontSize: '0.9rem',
+                                    color: 'var(--accent-primary)',
+                                    textDecoration: 'none',
                                     fontWeight: 600,
                                     marginTop: '0.5rem',
                                     padding: '0.5rem',
@@ -269,11 +269,11 @@ export default function ShiftDashboard({ user }: { user: any }) {
                     <div className="card" style={{ width: '400px', padding: '2rem', animation: 'fadeIn 0.2s ease-out' }}>
                         <h2 style={{ marginBottom: '0.5rem', textAlign: 'center' }}>Smenani Ochish</h2>
                         <p style={{ color: 'var(--text-muted)', textAlign: 'center', marginBottom: '2rem' }}>Kassadagi boshlang'ich naqd pulni kiriting.</p>
-                        
+
                         <div style={{ marginBottom: '2rem' }}>
                             <label style={{ fontSize: '0.8rem', display: 'block', marginBottom: '0.5rem' }}>Naqd pul miqdori (so'm)</label>
-                            <input 
-                                type="number" 
+                            <input
+                                type="number"
                                 value={cashValue}
                                 onChange={e => setCashValue(e.target.value)}
                                 autoFocus
@@ -283,14 +283,14 @@ export default function ShiftDashboard({ user }: { user: any }) {
                         </div>
 
                         <div style={{ display: 'flex', gap: '1rem' }}>
-                            <button 
+                            <button
                                 onClick={handleOpenShift}
                                 disabled={!cashValue || isProcessing}
                                 style={{ flex: 2, padding: '1rem', background: 'var(--accent-primary)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', fontWeight: 700, cursor: 'pointer' }}
                             >
                                 {isProcessing ? "Ochilmoqda..." : "Tasdiqlash"}
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setShowOpenModal(false)}
                                 style={{ flex: 1, padding: '1rem', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', fontWeight: 600, cursor: 'pointer' }}
                             >
@@ -306,7 +306,7 @@ export default function ShiftDashboard({ user }: { user: any }) {
                     <div className="card" style={{ width: '450px', padding: '2rem', animation: 'fadeIn 0.2s ease-out' }}>
                         <h2 style={{ marginBottom: '0.5rem', textAlign: 'center' }}>Smenani Yakunlash</h2>
                         <p style={{ color: 'var(--text-muted)', textAlign: 'center', marginBottom: '2rem' }}>Kunlik savdo yakunini tasdiqlang.</p>
-                        
+
                         <div style={{ background: 'var(--bg-tertiary)', padding: '1.5rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                                 <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Boshlang'ich pul:</span>
@@ -325,8 +325,8 @@ export default function ShiftDashboard({ user }: { user: any }) {
 
                         <div style={{ marginBottom: '2rem' }}>
                             <label style={{ fontSize: '0.8rem', display: 'block', marginBottom: '0.5rem' }}>Haqiqiy mavjud naqd pul (so'm)</label>
-                            <input 
-                                type="number" 
+                            <input
+                                type="number"
                                 value={cashValue}
                                 onChange={e => setCashValue(e.target.value)}
                                 autoFocus
@@ -336,14 +336,14 @@ export default function ShiftDashboard({ user }: { user: any }) {
                         </div>
 
                         <div style={{ display: 'flex', gap: '1rem' }}>
-                            <button 
+                            <button
                                 onClick={handleCloseShift}
                                 disabled={!cashValue || isProcessing}
                                 style={{ flex: 2, padding: '1rem', background: 'var(--danger)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', fontWeight: 700, cursor: 'pointer' }}
                             >
                                 {isProcessing ? "Yopilmoqda..." : "Smenani Yopish"}
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setShowCloseModal(false)}
                                 style={{ flex: 1, padding: '1rem', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', fontWeight: 600, cursor: 'pointer' }}
                             >

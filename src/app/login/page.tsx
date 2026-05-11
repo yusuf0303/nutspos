@@ -1,12 +1,24 @@
 'use client';
 
-import { useActionState, useEffect } from 'react';
+import { useActionState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { loginAction } from '@/app/actions/authActions';
 import { useToast } from '@/context/ToastContext';
 
 export default function LoginPage() {
+    return (
+        <Suspense fallback={<div>Yuklanmoqda...</div>}>
+            <LoginForm />
+        </Suspense>
+    );
+}
+
+function LoginForm() {
     const [state, formAction, isPending] = useActionState(loginAction, null);
     const { showToast } = useToast();
+
+    const searchParams = useSearchParams();
+    const redirectTo = searchParams.get('callbackUrl') || '/pos';
 
     useEffect(() => {
         if (state?.error) {
@@ -33,6 +45,7 @@ export default function LoginPage() {
                     action={formAction}
                     style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
                 >
+                    <input type="hidden" name="redirectTo" value={redirectTo} />
                     <div>
                         <label htmlFor="email" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.875rem' }}>Elektron Pochta</label>
                         <input

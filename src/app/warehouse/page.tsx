@@ -7,14 +7,14 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
     const params = await searchParams;
     const period = params.period || 'today';
     const showMoreTop = params.showMoreTop === 'true';
-    
+
     const toggleParams = new URLSearchParams();
     if (params.period) toggleParams.set('period', params.period);
     if (params.startDate) toggleParams.set('startDate', params.startDate);
     if (params.endDate) toggleParams.set('endDate', params.endDate);
     if (!showMoreTop) toggleParams.set('showMoreTop', 'true');
     const toggleTopProductsUrl = `/warehouse?${toggleParams.toString()}`;
-    
+
     const showModal = params.modal;
     const closeModalUrl = `/warehouse?${toggleParams.toString()}`;
     // ... existing code ...
@@ -33,7 +33,7 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
     let dailyOrdersData: any[] = [];
     let inventory: any[] = [];
     let periodExpensesData: any[] = [];
-    
+
     let startD = new Date();
     startD.setHours(0, 0, 0, 0);
     let endD = new Date();
@@ -97,11 +97,11 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
         const fixedCategories = ['rent', 'ijara', 'salary', 'maosh', 'utility', 'kommunal'];
         const expenseDiffTime = Math.abs(endD.getTime() - startD.getTime());
         const expenseDiffDays = Math.max(1, Math.ceil(expenseDiffTime / (1000 * 60 * 60 * 24)));
-        
+
         periodExpensesData = await prisma.expense.findMany({
             where: { createdAt: { gte: startD, lte: endD } }
         });
-        
+
         const variableSum = periodExpensesData
             .filter(exp => !fixedCategories.includes(exp.category.toLowerCase().trim()))
             .reduce((sum, exp) => sum + exp.amount, 0);
@@ -144,7 +144,7 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
         // Dynamic Sales Chart based on period
         const diffTime = Math.abs(endD.getTime() - startD.getTime());
         const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-        
+
         const periodOrders = await prisma.order.findMany({
             where: {
                 createdAt: { gte: startD, lte: endD },
@@ -157,7 +157,7 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
             // Hourly: group by 3-hour blocks (8 blocks)
             chartSalesData = Array(8).fill(0);
             chartLabels = ['00-03', '03-06', '06-09', '09-12', '12-15', '15-18', '18-21', '21-24'];
-            
+
             periodOrders.forEach(o => {
                 const hour = o.createdAt.getHours();
                 const blockIndex = Math.floor(hour / 3);
@@ -169,17 +169,17 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
             // Daily
             chartSalesData = Array(diffDays).fill(0);
             chartLabels = Array(diffDays).fill('');
-            
+
             for (let i = 0; i < diffDays; i++) {
                 const d = new Date(startD);
                 d.setDate(d.getDate() + i);
-                chartLabels[i] = `${d.getDate()}/${d.getMonth()+1}`;
-                
+                chartLabels[i] = `${d.getDate()}/${d.getMonth() + 1}`;
+
                 const dStart = new Date(d);
                 dStart.setHours(0, 0, 0, 0);
                 const dEnd = new Date(d);
                 dEnd.setHours(23, 59, 59, 999);
-                
+
                 chartSalesData[i] = periodOrders
                     .filter(o => o.createdAt >= dStart && o.createdAt <= dEnd)
                     .reduce((sum, o) => sum + o.totalAmount, 0);
@@ -191,17 +191,17 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
             const endMonth = endD.getMonth();
             const endYear = endD.getFullYear();
             const diffMonths = Math.max(1, (endYear - startYear) * 12 + (endMonth - startMonth) + 1);
-            
+
             chartSalesData = Array(diffMonths).fill(0);
             chartLabels = Array(diffMonths).fill('');
-            
+
             for (let i = 0; i < diffMonths; i++) {
                 const d = new Date(startYear, startMonth + i, 1);
-                chartLabels[i] = `${d.getMonth()+1}/${d.getFullYear()}`;
-                
+                chartLabels[i] = `${d.getMonth() + 1}/${d.getFullYear()}`;
+
                 const dStart = new Date(d);
                 const dEnd = new Date(startYear, startMonth + i + 1, 0, 23, 59, 59, 999);
-                
+
                 chartSalesData[i] = periodOrders
                     .filter(o => o.createdAt >= dStart && o.createdAt <= dEnd)
                     .reduce((sum, o) => sum + o.totalAmount, 0);
@@ -239,7 +239,7 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
             const hour = o.createdAt.getHours();
             const blockIndex = Math.floor(hour / 3);
             const branchKey = o.branchId && branchMap.has(o.branchId) ? o.branchId : 'unknown';
-            
+
             if (blockIndex >= 0 && blockIndex < 8) {
                 heatmapData[branchKey].data[blockIndex] += o.totalAmount;
             }
@@ -251,7 +251,7 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                 if (val > maxHeatmapValue) maxHeatmapValue = val;
             });
         });
-        
+
         heatmapData = Object.fromEntries(
             Object.entries(heatmapData).filter(([_, b]) => b.data.some(val => val > 0))
         );
@@ -274,7 +274,7 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
         custom: 'Tanlangan davrdagi'
     };
     const periodLabel = periodLabels[period] || 'Bugungi';
-    
+
     const filterQuery = `period=${period}${period === 'custom' ? `&startDate=${params.startDate}&endDate=${params.endDate}` : ''}`;
     const getModalUrl = (type: string) => `/warehouse?${filterQuery}&modal=${type}`;
 
@@ -390,11 +390,11 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                                             <span>{branch.total.toLocaleString()} so'm</span>
                                         </div>
                                         <div style={{ width: '100%', height: '8px', background: 'var(--bg-tertiary)', borderRadius: '4px', overflow: 'hidden' }}>
-                                            <div style={{ 
-                                                width: `${widthPercent}%`, 
-                                                height: '100%', 
-                                                background: i === 0 ? 'var(--accent-primary)' : 'var(--accent-secondary)', 
-                                                transition: 'width 0.5s ease' 
+                                            <div style={{
+                                                width: `${widthPercent}%`,
+                                                height: '100%',
+                                                background: i === 0 ? 'var(--accent-primary)' : 'var(--accent-secondary)',
+                                                transition: 'width 0.5s ease'
                                             }} />
                                         </div>
                                     </div>
@@ -424,17 +424,17 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                                 const intensity = maxHeatmapValue > 0 ? (val / maxHeatmapValue) : 0;
                                 const opacity = intensity === 0 ? 0.05 : Math.max(0.15, intensity);
                                 return (
-                                    <div 
-                                        key={i} 
+                                    <div
+                                        key={i}
                                         title={`${branch.name}: ${timeBlocks[i]} - ${val.toLocaleString()} so'm`}
-                                        style={{ 
-                                            height: '40px', 
-                                            borderRadius: '4px', 
-                                            backgroundColor: `rgba(59, 130, 246, ${opacity})`, 
+                                        style={{
+                                            height: '40px',
+                                            borderRadius: '4px',
+                                            backgroundColor: `rgba(59, 130, 246, ${opacity})`,
                                             border: intensity > 0 ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid transparent',
                                             transition: 'transform 0.2s',
                                             cursor: 'pointer'
-                                        }} 
+                                        }}
                                         className="chart-bar"
                                     />
                                 );
@@ -446,10 +446,10 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
 
             {/* Metric Breakdown Modals */}
             {showModal && (
-                <div style={{ 
-                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', 
-                    backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', 
-                    justifyContent: 'center', zIndex: 2000, padding: '1rem' 
+                <div style={{
+                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)',
+                    backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', zIndex: 2000, padding: '1rem'
                 }}>
                     <div className="card" style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>

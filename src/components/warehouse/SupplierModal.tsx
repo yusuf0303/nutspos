@@ -19,7 +19,6 @@ export default function SupplierModal({
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
-        contactName: '',
         email: '',
         phone: '',
         address: ''
@@ -29,7 +28,6 @@ export default function SupplierModal({
         if (supplier) {
             setFormData({
                 name: supplier.name || '',
-                contactName: supplier.contactName || '',
                 email: supplier.email || '',
                 phone: supplier.phone || '',
                 address: supplier.address || ''
@@ -37,7 +35,6 @@ export default function SupplierModal({
         } else {
             setFormData({
                 name: '',
-                contactName: '',
                 email: '',
                 phone: '',
                 address: ''
@@ -82,27 +79,15 @@ export default function SupplierModal({
                     />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div className="form-group">
-                        <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem', fontWeight: 600 }}>Mas'ul shaxs</label>
-                        <input
-                            type="text"
-                            className="input"
-                            style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
-                            value={formData.contactName}
-                            onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem', fontWeight: 600 }}>Telefon</label>
-                        <input
-                            type="text"
-                            className="input"
-                            style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        />
-                    </div>
+                <div className="form-group">
+                    <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem', fontWeight: 600 }}>Telefon</label>
+                    <input
+                        type="text"
+                        className="input"
+                        style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    />
                 </div>
 
                 <div className="form-group">

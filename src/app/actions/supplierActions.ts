@@ -5,7 +5,6 @@ import { revalidatePath } from 'next/cache';
 
 export async function createSupplier(data: {
     name: string,
-    contactName?: string,
     email?: string,
     phone?: string,
     address?: string
@@ -25,7 +24,6 @@ export async function createSupplier(data: {
 
 export async function updateSupplier(id: string, data: {
     name?: string,
-    contactName?: string,
     email?: string,
     phone?: string,
     address?: string

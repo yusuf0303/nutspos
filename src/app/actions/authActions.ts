@@ -5,7 +5,7 @@ import { AuthError } from 'next-auth';
 import { redirect } from 'next/navigation';
 
 export async function loginAction(prevState: any, formData: FormData) {
-    let redirectTo = '/pos';
+    let redirectTo = (formData.get('redirectTo') as string) || '/pos';
     try {
         const result = await signIn('credentials', {
             ...Object.fromEntries(formData),
@@ -26,7 +26,7 @@ export async function loginAction(prevState: any, formData: FormData) {
         }
         throw error;
     }
-    
+
     // If successful, redirect manually
     redirect(redirectTo);
 }

@@ -54,7 +54,7 @@ export async function closeShift(shiftId: string, data: {
         const cashSales = shift.orders
             .filter(o => o.status === 'COMPLETED')
             .reduce((acc, o) => acc + o.cashAmount, 0);
-        
+
         const expectedCash = shift.startingCash + cashSales;
 
         await prisma.shift.update({
@@ -81,7 +81,7 @@ export async function getCurrentShift(branchId: string) {
                 branchId,
                 status: 'OPEN'
             },
-            include: { 
+            include: {
                 branch: true,
                 orders: true,
                 user: true
