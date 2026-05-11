@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import BranchList from '@/components/warehouse/BranchList';
 
+export const dynamic = 'force-dynamic';
+
 export default async function BranchesPage() {
     const branches = await prisma.branch.findMany({
         orderBy: { name: 'asc' }

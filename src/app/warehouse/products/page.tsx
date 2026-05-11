@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import FilterBar from '@/components/warehouse/FilterBar';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProductsPage({
     searchParams,
 }: {

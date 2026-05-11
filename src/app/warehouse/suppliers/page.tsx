@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import SupplierList from '@/components/warehouse/SupplierList';
 
+export const dynamic = 'force-dynamic';
+
 export default async function SuppliersPage() {
     const suppliers = await prisma.supplier.findMany({
         orderBy: { name: 'asc' }
