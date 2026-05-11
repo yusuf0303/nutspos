@@ -67,8 +67,8 @@ export async function receivePurchaseOrder(poId: string) {
             // 2. Update inventory and product cost
             for (const item of po.items) {
                 await tx.inventory.upsert({
-                    where: { productId_location: { productId: item.productId, location: "Main Warehouse" } },
-                    create: { productId: item.productId, quantity: item.quantity, location: "Main Warehouse" },
+                    where: { productId_branchId: { productId: item.productId, branchId: null } },
+                    create: { productId: item.productId, quantity: item.quantity, branchId: null },
                     update: { quantity: { increment: item.quantity } }
                 });
 

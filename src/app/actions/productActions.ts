@@ -32,7 +32,7 @@ export async function createProduct(data: {
             await tx.inventory.create({
                 data: {
                     productId: newProduct.id,
-                    location: "Main Warehouse",
+                    branchId: null,
                     quantity: 0
                 }
             });

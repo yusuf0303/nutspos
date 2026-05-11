@@ -132,10 +132,7 @@ export async function createOrder(data: {
                 const inventory = await tx.inventory.findFirst({
                     where: {
                         productId: item.productId,
-                        OR: [
-                            { branchId: data.branchId },
-                            { location: "Main Warehouse" }
-                        ]
+                        branchId: data.branchId || null
                     }
                 });
 
