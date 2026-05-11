@@ -34,6 +34,9 @@ export default function WarehouseLayout({ children }: { children: React.ReactNod
                     <Link href="/warehouse/inventory" style={{ padding: '0.875rem 1rem', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', textDecoration: 'none', transition: 'background 0.2s', fontWeight: 500 }} className="nav-link">
                         {t('inventory')}
                     </Link>
+                    <Link href="/warehouse/transfers" style={{ padding: '0.875rem 1rem', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', textDecoration: 'none', transition: 'background 0.2s', fontWeight: 500 }} className="nav-link">
+                        {lang === 'uz' ? '🔄 Ko\'chirish' : '🔄 Transfers'}
+                    </Link>
                     <Link href="/warehouse/purchases" style={{ padding: '0.875rem 1rem', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', textDecoration: 'none', transition: 'background 0.2s', fontWeight: 500 }} className="nav-link">
                         {lang === 'uz' ? 'Ta\'minotlar' : 'Purchases'}
                     </Link>

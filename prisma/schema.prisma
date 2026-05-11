@@ -28,6 +28,8 @@ model User {
   orders    Order[]
   purchases PurchaseOrder[]
   shifts    Shift[]
+  adjustments InventoryAdjustment[]
+  transfers   StockTransfer[]
 }
 
 model Branch {
@@ -40,6 +42,9 @@ model Branch {
   expenses  Expense[]
   inventory Inventory[]
   shifts    Shift[]
+  adjustments InventoryAdjustment[]
+  transfersFrom StockTransfer[] @relation("SourceBranch")
+  transfersTo   StockTransfer[] @relation("DestBranch")
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 }
@@ -81,6 +86,8 @@ model Product {
   inventory   Inventory[]
   orderItems  OrderItem[]
   purchaseItems PurchaseOrderItem[]
+  adjustmentItems AdjustmentItem[]
+  transferItems   TransferItem[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -93,12 +100,38 @@ model Inventory {
   branchId    String?
   branch      Branch?  @relation(fields: [branchId], references: [id])
   quantity    Int      @default(0)
-  location    String   @default("Main Warehouse")
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@unique([productId, location])
+  @@unique([productId, branchId])
+}
+
+model InventoryAdjustment {
+  id          String   @id @default(cuid())
+  userId      String   // Created by
+  user        User     @relation(fields: [userId], references: [id])
+  branchId    String
+  branch      Branch   @relation(fields: [branchId], references: [id])
+  reason      String?  // Inventory Audit, Damaged, Expired, etc.
+  status      String   @default("PENDING") // PENDING, COMPLETED, CANCELLED
+  items       AdjustmentItem[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AdjustmentItem {
+  id              String              @id @default(cuid())
+  adjustmentId    String
+  adjustment      InventoryAdjustment @relation(fields: [adjustmentId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product             @relation(fields: [productId], references: [id])
+  expectedQuantity Int                // Current quantity in system
+  actualQuantity   Int                // Quantity found during audit
+  
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
 }
 
 model Customer {
@@ -212,3 +245,30 @@ model GlobalSetting {
   value String
 }
 
+model TransferItem {
+  id              String         @id @default(cuid())
+  transferId      String
+  transfer        StockTransfer  @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product        @relation(fields: [productId], references: [id])
+  quantity        Int
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model StockTransfer {
+  id              String         @id @default(cuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  fromBranchId    String
+  fromBranch      Branch         @relation("SourceBranch", fields: [fromBranchId], references: [id])
+  toBranchId      String
+  toBranch        Branch         @relation("DestBranch", fields: [toBranchId], references: [id])
+  reason          String?
+  status          String         @default("PENDING") // PENDING, COMPLETED, CANCELLED
+  items           TransferItem[]
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}

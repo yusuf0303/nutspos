@@ -1,11 +1,18 @@
-import { prisma } from '@/lib/prisma';
+import { getInventorySummary } from '@/app/actions/inventoryActions';
 import InventoryList from '@/components/warehouse/InventoryList';
 
-export default async function InventoryPage() {
-    const inventory = await prisma.inventory.findMany({
-        include: { product: true },
-        orderBy: { updatedAt: 'desc' }
-    });
+export const dynamic = 'force-dynamic';
 
-    return <InventoryList initialInventory={inventory} />;
+export default async function InventoryPage() {
+    const { data, branches, pendingAdjustments } = await getInventorySummary();
+
+    return (
+        <div style={{ padding: '2rem' }}>
+            <InventoryList 
+                summary={data || []} 
+                branches={branches || []} 
+                pendingAdjustments={pendingAdjustments || []} 
+            />
+        </div>
+    );
 }
