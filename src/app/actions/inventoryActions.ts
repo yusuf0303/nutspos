@@ -174,3 +174,24 @@ export async function getInventorySummary() {
         return { success: false, error: error.message };
     }
 }
+
+// 5. Remove Item from Adjustment Document
+export async function removeAdjustmentItem(itemId: string) {
+    try {
+        const item = await prisma.adjustmentItem.findUnique({
+            where: { id: itemId },
+            include: { adjustment: true }
+        });
+        if (!item) return { success: false, error: "Item not found" };
+
+        await prisma.adjustmentItem.delete({
+            where: { id: itemId }
+        });
+        
+        revalidatePath(`/warehouse/inventory/adjustments/${item.adjustmentId}`);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Remove Adjustment Item Error:", error);
+        return { success: false, error: error.message };
+    }
+}

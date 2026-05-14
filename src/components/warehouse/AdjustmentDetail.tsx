@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { updateAdjustmentItem, completeAdjustment } from '@/app/actions/inventoryActions';
+import { updateAdjustmentItem, completeAdjustment, removeAdjustmentItem } from '@/app/actions/inventoryActions';
 import { useToast } from '@/context/ToastContext';
 
 export default function AdjustmentDetail({ adjustment, products }: { adjustment: any, products: any[] }) {
@@ -36,6 +36,18 @@ export default function AdjustmentDetail({ adjustment, products }: { adjustment:
     const handleUpdateQty = async (productId: string, qty: number) => {
         await updateAdjustmentItem(adjustment.id, productId, qty);
         router.refresh();
+    };
+
+    const handleRemoveItem = async (itemId: string) => {
+        if (!confirm("Ushbu mahsulotni ro'yxatdan o'chirishni xohlaysizmi?")) return;
+        setLoading(true);
+        const result = await removeAdjustmentItem(itemId);
+        setLoading(false);
+        if (result.success) {
+            router.refresh();
+        } else {
+            showToast("Xato: " + result.error, "error");
+        }
     };
 
     const handleComplete = async () => {
@@ -72,7 +84,7 @@ export default function AdjustmentDetail({ adjustment, products }: { adjustment:
     // Styling
     const thStyle = { padding: '0.5rem', border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center' as const };
     const tdStyle = { padding: '0.5rem', border: '1px solid var(--border-color)', fontSize: '0.875rem' };
-    const inputStyle = { width: '100%', border: 'none', background: 'transparent', color: 'var(--text-primary)', textAlign: 'center' as const, outline: 'none', fontWeight: 700 };
+    const inputStyle = { width: '100%', border: 'none', background: 'transparent', color: '#0078d7', textAlign: 'center' as const, outline: 'none', fontWeight: 700 };
 
     // Calculate totals
     const totalExpectedSum = adjustment.items.reduce((sum: number, item: any) => sum + (item.expectedQuantity * item.product.price), 0);
@@ -138,6 +150,7 @@ export default function AdjustmentDetail({ adjustment, products }: { adjustment:
                             <th style={thStyle}>Haqiqiy summa</th>
                             <th style={thStyle}>Hisobdagi summa</th>
                             <th style={thStyle}>Farq summasi</th>
+                            {adjustment.status === 'PENDING' && <th style={thStyle}></th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -156,9 +169,19 @@ export default function AdjustmentDetail({ adjustment, products }: { adjustment:
                                     <td style={{ ...tdStyle, width: '80px', background: '#fff' }}>
                                         <input 
                                             type="number" 
+                                            step={item.product.unit === 'dona' ? "1" : "any"}
                                             style={inputStyle} 
                                             defaultValue={item.actualQuantity}
-                                            onBlur={(e) => handleUpdateQty(item.productId, Number(e.target.value))}
+                                            onKeyDown={(e) => {
+                                                if (item.product.unit === 'dona' && (e.key === '.' || e.key === ',' || e.key === 'e' || e.key === 'E')) {
+                                                    e.preventDefault();
+                                                }
+                                            }}
+                                            onBlur={(e) => {
+                                                let val = Number(e.target.value);
+                                                if (item.product.unit === 'dona') val = Math.round(val);
+                                                handleUpdateQty(item.productId, val);
+                                            }}
                                         />
                                     </td>
                                     <td style={{ ...tdStyle, textAlign: 'center', width: '80px', color: '#666' }}>{item.expectedQuantity}</td>
@@ -167,6 +190,11 @@ export default function AdjustmentDetail({ adjustment, products }: { adjustment:
                                     <td style={{ ...tdStyle, textAlign: 'right', width: '110px' }}>{actualSum.toLocaleString()}</td>
                                     <td style={{ ...tdStyle, textAlign: 'right', width: '110px', color: '#666' }}>{expectedSum.toLocaleString()}</td>
                                     <td style={{ ...tdStyle, textAlign: 'right', width: '110px', fontWeight: 600 }}>{diffSum.toLocaleString()}</td>
+                                    {adjustment.status === 'PENDING' && (
+                                        <td style={{ ...tdStyle, textAlign: 'center', width: '40px' }}>
+                                            <button onClick={() => handleRemoveItem(item.id)} style={{ background: 'none', border: 'none', color: 'red', cursor: 'pointer', fontWeight: 700, fontSize: '1.25rem' }} title="O'chirish">✕</button>
+                                        </td>
+                                    )}
                                 </tr>
                             );
                         })}
@@ -176,6 +204,7 @@ export default function AdjustmentDetail({ adjustment, products }: { adjustment:
                             <td style={{ ...tdStyle, textAlign: 'right' }}>{totalActualSum.toLocaleString()}</td>
                             <td style={{ ...tdStyle, textAlign: 'right' }}>{totalExpectedSum.toLocaleString()}</td>
                             <td style={{ ...tdStyle, textAlign: 'right' }}>{totalDiffSum.toLocaleString()}</td>
+                            {adjustment.status === 'PENDING' && <td style={tdStyle}></td>}
                         </tr>
                     </tbody>
                 </table>

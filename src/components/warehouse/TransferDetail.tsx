@@ -162,8 +162,18 @@ export default function TransferDetail({ transfer, products }: { transfer: any, 
                                             <input
                                                 type="number"
                                                 min={1}
+                                                step={item.product.unit === 'dona' ? "1" : "any"}
                                                 defaultValue={item.quantity}
-                                                onBlur={(e) => handleUpdateQty(item.productId, Number(e.target.value))}
+                                                onKeyDown={(e) => {
+                                                    if (item.product.unit === 'dona' && (e.key === '.' || e.key === ',' || e.key === 'e' || e.key === 'E')) {
+                                                        e.preventDefault();
+                                                    }
+                                                }}
+                                                onBlur={(e) => {
+                                                    let val = Number(e.target.value);
+                                                    if (item.product.unit === 'dona') val = Math.round(val);
+                                                    handleUpdateQty(item.productId, val);
+                                                }}
                                                 style={{ width: '70px', padding: '0.25rem', textAlign: 'center', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', fontWeight: 700 }}
                                             />
                                         ) : (

@@ -44,7 +44,7 @@ export default function NewTransferForm({ branches }: { branches: any[] }) {
                 <div>
                     <label style={labelStyle}>Jo'natuvchi Filial</label>
                     <select required style={iStyle} value={formData.fromBranchId} onChange={(e) => setFormData({ ...formData, fromBranchId: e.target.value })}>
-                        {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                        {branches.map(b => <option key={b.id} value={b.id} style={{ color: '#000', background: '#fff' }}>{b.name}</option>)}
                     </select>
                 </div>
 
@@ -55,7 +55,7 @@ export default function NewTransferForm({ branches }: { branches: any[] }) {
                 <div>
                     <label style={labelStyle}>Qabul Qiluvchi Filial</label>
                     <select required style={iStyle} value={formData.toBranchId} onChange={(e) => setFormData({ ...formData, toBranchId: e.target.value })}>
-                        {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                        {branches.map(b => <option key={b.id} value={b.id} style={{ color: '#000', background: '#fff' }}>{b.name}</option>)}
                     </select>
                 </div>
 

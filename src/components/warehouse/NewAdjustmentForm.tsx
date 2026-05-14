@@ -39,7 +39,7 @@ export default function NewAdjustmentForm({ branches }: { branches: any[] }) {
                 <div className="form-group">
                     <label style={labelStyle}>Filial</label>
                     <select required style={iStyle} value={formData.branchId} onChange={(e) => setFormData({...formData, branchId: e.target.value})}>
-                        {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                        {branches.map(b => <option key={b.id} value={b.id} style={{ color: '#000', background: '#fff' }}>{b.name}</option>)}
                     </select>
                 </div>
                 <div className="form-group">
