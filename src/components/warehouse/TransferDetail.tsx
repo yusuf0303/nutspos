@@ -71,13 +71,13 @@ export default function TransferDetail({ transfer, products }: { transfer: any, 
         return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
     };
 
-    const thStyle: React.CSSProperties = { padding: '0.625rem 0.75rem', border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center' };
+    const thStyle: React.CSSProperties = { padding: '0.625rem 0.75rem', border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center', position: 'sticky', top: 0, zIndex: 10 };
     const tdStyle: React.CSSProperties = { padding: '0.5rem 0.75rem', border: '1px solid var(--border-color)', fontSize: '0.875rem' };
 
     if (!mounted) return null;
 
     return (
-        <div style={{ animation: 'fadeIn 0.3s' }}>
+        <div style={{ animation: 'fadeIn 0.3s', height: 'calc(100vh - 4rem)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             {/* Header */}
             <div style={{ marginBottom: '1rem' }}>
                 <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>
@@ -133,7 +133,7 @@ export default function TransferDetail({ transfer, products }: { transfer: any, 
             </div>
 
             {/* Items Table */}
-            <div style={{ overflowX: 'auto', padding: 0 }} className="card">
+            <div style={{ flex: 1, overflow: 'auto', padding: 0 }} className="card">
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
                     <thead>
                         <tr>
@@ -190,7 +190,7 @@ export default function TransferDetail({ transfer, products }: { transfer: any, 
                         )}
                     </tbody>
                     {transfer.items.length > 0 && (
-                        <tfoot>
+                        <tfoot style={{ position: 'sticky', bottom: 0, zIndex: 10, boxShadow: '0 -2px 5px rgba(0,0,0,0.05)' }}>
                             <tr>
                                 <td colSpan={transfer.status === 'PENDING' ? 4 : 3} style={{ ...tdStyle, textAlign: 'right', fontWeight: 700, background: 'var(--bg-tertiary)' }}>
                                     Jami mahsulotlar:

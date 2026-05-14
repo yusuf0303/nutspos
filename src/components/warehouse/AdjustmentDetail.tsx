@@ -82,7 +82,7 @@ export default function AdjustmentDetail({ adjustment, products }: { adjustment:
     if (!mounted) return null; // Avoid hydration mismatch by not rendering on server initial pass
 
     // Styling
-    const thStyle = { padding: '0.5rem', border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center' as const };
+    const thStyle = { padding: '0.5rem', border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'center' as const, position: 'sticky' as const, top: 0, zIndex: 10 };
     const tdStyle = { padding: '0.5rem', border: '1px solid var(--border-color)', fontSize: '0.875rem' };
     const inputStyle = { width: '100%', border: 'none', background: 'transparent', color: '#0078d7', textAlign: 'center' as const, outline: 'none', fontWeight: 700 };
 
@@ -92,7 +92,7 @@ export default function AdjustmentDetail({ adjustment, products }: { adjustment:
     const totalDiffSum = totalActualSum - totalExpectedSum;
 
     return (
-        <div style={{ animation: 'fadeIn 0.3s', background: '#f5f5f5', color: '#333', padding: '1rem', minHeight: '100vh', fontFamily: 'Segoe UI, Tahoma, sans-serif' }}>
+        <div style={{ animation: 'fadeIn 0.3s', background: '#f5f5f5', color: '#333', padding: '1rem', height: 'calc(100vh - 4rem)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: 'Segoe UI, Tahoma, sans-serif' }}>
             {/* Header Area */}
             <div style={{ marginBottom: '1rem' }}>
                 <h1 style={{ fontSize: '1.25rem', margin: 0, color: '#444' }}>
@@ -135,7 +135,7 @@ export default function AdjustmentDetail({ adjustment, products }: { adjustment:
             </div>
 
             {/* Main Table */}
-            <div style={{ overflowX: 'auto', background: 'white', border: '1px solid #ccc' }}>
+            <div style={{ flex: 1, overflow: 'auto', background: 'white', border: '1px solid #ccc' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                         <tr>
@@ -199,14 +199,16 @@ export default function AdjustmentDetail({ adjustment, products }: { adjustment:
                             );
                         })}
                         {/* Footer Totals */}
-                        <tr style={{ background: '#eee', fontWeight: 'bold' }}>
-                            <td colSpan={8} style={{ ...tdStyle, textAlign: 'right' }}>JAMI:</td>
-                            <td style={{ ...tdStyle, textAlign: 'right' }}>{totalActualSum.toLocaleString()}</td>
-                            <td style={{ ...tdStyle, textAlign: 'right' }}>{totalExpectedSum.toLocaleString()}</td>
-                            <td style={{ ...tdStyle, textAlign: 'right' }}>{totalDiffSum.toLocaleString()}</td>
-                            {adjustment.status === 'PENDING' && <td style={tdStyle}></td>}
-                        </tr>
                     </tbody>
+                    <tfoot style={{ position: 'sticky', bottom: 0, zIndex: 10, boxShadow: '0 -2px 5px rgba(0,0,0,0.05)' }}>
+                        <tr style={{ fontWeight: 'bold' }}>
+                            <td colSpan={8} style={{ ...tdStyle, textAlign: 'right', background: '#eee' }}>JAMI:</td>
+                            <td style={{ ...tdStyle, textAlign: 'right', background: '#eee' }}>{totalActualSum.toLocaleString()}</td>
+                            <td style={{ ...tdStyle, textAlign: 'right', background: '#eee' }}>{totalExpectedSum.toLocaleString()}</td>
+                            <td style={{ ...tdStyle, textAlign: 'right', background: '#eee' }}>{totalDiffSum.toLocaleString()}</td>
+                            {adjustment.status === 'PENDING' && <td style={{...tdStyle, background: '#eee'}}></td>}
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
 
