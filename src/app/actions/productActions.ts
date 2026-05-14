@@ -44,6 +44,9 @@ export async function createProduct(data: {
         return { success: true, id: product.id };
     } catch (error: any) {
         console.error("Create Product Error:", error);
+        if (error.code === 'P2002') {
+            return { success: false, error: "Ushbu mahsulot kodi (SKU) allaqachon bazada mavjud! Iltimos, boshqa kod kiriting." };
+        }
         return { success: false, error: error.message };
     }
 }
@@ -68,6 +71,9 @@ export async function updateProduct(id: string, data: {
         return { success: true };
     } catch (error: any) {
         console.error("Update Product Error:", error);
+        if (error.code === 'P2002') {
+            return { success: false, error: "Ushbu mahsulot kodi (SKU) allaqachon bazada mavjud! Iltimos, boshqa kod kiriting." };
+        }
         return { success: false, error: error.message };
     }
 }
