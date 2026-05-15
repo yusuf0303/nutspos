@@ -91,6 +91,10 @@ export default function AdjustmentDetail({ adjustment, products }: { adjustment:
     const totalActualSum = adjustment.items.reduce((sum: number, item: any) => sum + (item.actualQuantity * item.product.price), 0);
     const totalDiffSum = totalActualSum - totalExpectedSum;
 
+    const totalExpectedCostSum = adjustment.items.reduce((sum: number, item: any) => sum + (item.expectedQuantity * (item.product.cost || 0)), 0);
+    const totalActualCostSum = adjustment.items.reduce((sum: number, item: any) => sum + (item.actualQuantity * (item.product.cost || 0)), 0);
+    const totalDiffCostSum = totalActualCostSum - totalExpectedCostSum;
+
     return (
         <div style={{ animation: 'fadeIn 0.3s', background: '#f5f5f5', color: '#333', padding: '1rem', height: 'calc(100vh - 4rem)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: 'Segoe UI, Tahoma, sans-serif' }}>
             {/* Header Area */}
@@ -202,11 +206,18 @@ export default function AdjustmentDetail({ adjustment, products }: { adjustment:
                     </tbody>
                     <tfoot style={{ position: 'sticky', bottom: 0, zIndex: 10, boxShadow: '0 -2px 5px rgba(0,0,0,0.05)' }}>
                         <tr style={{ fontWeight: 'bold' }}>
-                            <td colSpan={8} style={{ ...tdStyle, textAlign: 'right', background: '#eee' }}>JAMI:</td>
+                            <td colSpan={8} style={{ ...tdStyle, textAlign: 'right', background: '#eee' }}>JAMI SOTUV NARXIDA:</td>
                             <td style={{ ...tdStyle, textAlign: 'right', background: '#eee' }}>{totalActualSum.toLocaleString()}</td>
                             <td style={{ ...tdStyle, textAlign: 'right', background: '#eee' }}>{totalExpectedSum.toLocaleString()}</td>
                             <td style={{ ...tdStyle, textAlign: 'right', background: '#eee' }}>{totalDiffSum.toLocaleString()}</td>
                             {adjustment.status === 'PENDING' && <td style={{...tdStyle, background: '#eee'}}></td>}
+                        </tr>
+                        <tr style={{ fontWeight: 'bold' }}>
+                            <td colSpan={8} style={{ ...tdStyle, textAlign: 'right', background: '#e2e8f0', color: '#334155' }}>JAMI TANNARXDA:</td>
+                            <td style={{ ...tdStyle, textAlign: 'right', background: '#e2e8f0', color: '#334155' }}>{totalActualCostSum.toLocaleString()}</td>
+                            <td style={{ ...tdStyle, textAlign: 'right', background: '#e2e8f0', color: '#334155' }}>{totalExpectedCostSum.toLocaleString()}</td>
+                            <td style={{ ...tdStyle, textAlign: 'right', background: '#e2e8f0', color: '#334155' }}>{totalDiffCostSum.toLocaleString()}</td>
+                            {adjustment.status === 'PENDING' && <td style={{...tdStyle, background: '#e2e8f0'}}></td>}
                         </tr>
                     </tfoot>
                 </table>
