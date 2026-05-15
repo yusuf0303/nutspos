@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { updateAdjustmentItem, completeAdjustment, removeAdjustmentItem } from '@/app/actions/inventoryActions';
+import { updateAdjustmentItem, completeAdjustment, removeAdjustmentItem, revertAdjustment } from '@/app/actions/inventoryActions';
 import { useToast } from '@/context/ToastContext';
 
 export default function AdjustmentDetail({ adjustment, products }: { adjustment: any, products: any[] }) {
@@ -58,6 +58,19 @@ export default function AdjustmentDetail({ adjustment, products }: { adjustment:
         if (result.success) {
             showToast("Inventarizatsiya yakunlandi", "success");
             router.push('/warehouse/inventory');
+        } else {
+            showToast("Xato: " + result.error, "error");
+        }
+    };
+
+    const handleRevert = async () => {
+        if (!confirm("Hujjatni haqiqatdan ham bekor qilmoqchimisiz? Barcha qoldiqlar eski holatiga qaytariladi va siz uni qayta tahrirlashingiz mumkin bo'ladi.")) return;
+        setLoading(true);
+        const result = await revertAdjustment(adjustment.id);
+        setLoading(false);
+        if (result.success) {
+            showToast("Hujjat bekor qilindi, endi uni tahrirlashingiz mumkin.", "success");
+            router.refresh();
         } else {
             showToast("Xato: " + result.error, "error");
         }
@@ -134,7 +147,15 @@ export default function AdjustmentDetail({ adjustment, products }: { adjustment:
 
                 <button className="btn-erp">Tanlash ▾</button>
                 <button className="btn-erp">Nomenklaturani to'ldirish ▾</button>
-                <button className="btn-erp" onClick={handleComplete} style={{ marginLeft: 'auto', background: '#4caf50', color: 'white', fontWeight: 'bold' }}>Inventarizatsiyani yopish</button>
+                {adjustment.status === 'PENDING' ? (
+                    <button className="btn-erp" onClick={handleComplete} disabled={loading} style={{ marginLeft: 'auto', background: '#4caf50', color: 'white', fontWeight: 'bold' }}>
+                        {loading ? 'Bajarilmoqda...' : 'Inventarizatsiyani yopish'}
+                    </button>
+                ) : (
+                    <button className="btn-erp" onClick={handleRevert} disabled={loading} style={{ marginLeft: 'auto', background: '#f44336', color: 'white', fontWeight: 'bold' }}>
+                        {loading ? 'Bajarilmoqda...' : 'Tahrirlash uchun bekor qilish'}
+                    </button>
+                )}
                 <button className="btn-erp" onClick={() => router.push('/warehouse/inventory')}>Saqlash va Chiqish</button>
             </div>
 
@@ -170,23 +191,29 @@ export default function AdjustmentDetail({ adjustment, products }: { adjustment:
                                     <td style={{ ...tdStyle, width: '80px' }}>{item.product.sku}</td>
                                     <td style={{ ...tdStyle }}>{item.product.name}</td>
                                     <td style={{ ...tdStyle, fontSize: '0.7rem', width: '110px' }}>{formatDate(item.updatedAt)}</td>
-                                    <td style={{ ...tdStyle, width: '80px', background: '#fff' }}>
-                                        <input 
-                                            type="number" 
-                                            step={item.product.unit === 'dona' ? "1" : "any"}
-                                            style={inputStyle} 
-                                            defaultValue={item.actualQuantity}
-                                            onKeyDown={(e) => {
-                                                if (item.product.unit === 'dona' && (e.key === '.' || e.key === ',' || e.key === 'e' || e.key === 'E')) {
-                                                    e.preventDefault();
-                                                }
-                                            }}
-                                            onBlur={(e) => {
-                                                let val = Number(e.target.value);
-                                                if (item.product.unit === 'dona') val = Math.round(val);
-                                                handleUpdateQty(item.productId, val);
-                                            }}
-                                        />
+                                    <td style={{ ...tdStyle, width: '80px', background: adjustment.status === 'PENDING' ? '#fff' : 'inherit' }}>
+                                        {adjustment.status === 'PENDING' ? (
+                                            <input 
+                                                type="number" 
+                                                step={item.product.unit === 'dona' ? "1" : "any"}
+                                                style={inputStyle} 
+                                                defaultValue={item.actualQuantity}
+                                                onKeyDown={(e) => {
+                                                    if (item.product.unit === 'dona' && (e.key === '.' || e.key === ',' || e.key === 'e' || e.key === 'E')) {
+                                                        e.preventDefault();
+                                                    }
+                                                }}
+                                                onBlur={(e) => {
+                                                    let val = Number(e.target.value);
+                                                    if (item.product.unit === 'dona') val = Math.round(val);
+                                                    handleUpdateQty(item.productId, val);
+                                                }}
+                                            />
+                                        ) : (
+                                            <div style={{ textAlign: 'center', fontWeight: 'bold', color: '#0078d7' }}>
+                                                {item.actualQuantity}
+                                            </div>
+                                        )}
                                     </td>
                                     <td style={{ ...tdStyle, textAlign: 'center', width: '80px', color: '#666' }}>{item.expectedQuantity}</td>
                                     <td style={{ ...tdStyle, textAlign: 'right', width: '100px' }}>{item.product.price.toLocaleString()}</td>

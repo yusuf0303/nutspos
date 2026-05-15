@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
-export default function InventoryList({ summary, branches, pendingAdjustments }: { summary: any[], branches: any[], pendingAdjustments: any[] }) {
+export default function InventoryList({ summary, branches, pendingAdjustments, completedAdjustments = [] }: { summary: any[], branches: any[], pendingAdjustments: any[], completedAdjustments?: any[] }) {
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredSummary = summary.filter(item => 
@@ -41,6 +41,28 @@ export default function InventoryList({ summary, branches, pendingAdjustments }:
                                     <div style={{ fontSize: '0.875rem', margin: '0.25rem 0' }}>Filial: <b>{adj.branch.name}</b></div>
                                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                                         {new Date(adj.createdAt).toLocaleDateString()} | {adj.user.name}
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Completed Adjustments Section */}
+            {completedAdjustments.length > 0 && (
+                <div className="card" style={{ marginBottom: '2rem', border: '1px solid var(--success)', background: 'rgba(34, 197, 94, 0.05)' }}>
+                    <h3 style={{ marginTop: 0, marginBottom: '1rem', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        ✅ Tasdiqlangan Hujjatlar ({completedAdjustments.length})
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
+                        {completedAdjustments.map(adj => (
+                            <Link key={adj.id} href={`/warehouse/inventory/adjustments/${adj.id}`} style={{ textDecoration: 'none' }}>
+                                <div className="card table-row-hover" style={{ padding: '1rem', border: '1px solid var(--border-color)', opacity: 0.8 }}>
+                                    <div style={{ fontWeight: 700, fontSize: '0.875rem' }}>INV-{adj.id.slice(-6).toUpperCase()}</div>
+                                    <div style={{ fontSize: '0.875rem', margin: '0.25rem 0' }}>Filial: <b>{adj.branch.name}</b></div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                        {new Date(adj.updatedAt).toLocaleDateString()} | {adj.user.name}
                                     </div>
                                 </div>
                             </Link>

@@ -149,6 +149,13 @@ export async function getInventorySummary() {
             orderBy: { createdAt: 'desc' }
         });
 
+        const completedAdjustments = await prisma.inventoryAdjustment.findMany({
+            where: { status: "COMPLETED" },
+            include: { branch: true, user: true },
+            orderBy: { updatedAt: 'desc' },
+            take: 20
+        });
+
         const summary = products.map(p => {
             const totalStock = p.inventory.reduce((sum, inv) => sum + inv.quantity, 0);
             const branchStock = branches.map(b => ({
@@ -168,7 +175,7 @@ export async function getInventorySummary() {
             };
         });
 
-        return { success: true, data: summary, branches, pendingAdjustments };
+        return { success: true, data: summary, branches, pendingAdjustments, completedAdjustments };
     } catch (error: any) {
         console.error("Get Inventory Summary Error:", error);
         return { success: false, error: error.message };
@@ -192,6 +199,59 @@ export async function removeAdjustmentItem(itemId: string) {
         return { success: true };
     } catch (error: any) {
         console.error("Remove Adjustment Item Error:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+// 6. Revert Completed Adjustment
+export async function revertAdjustment(adjustmentId: string) {
+    try {
+        const adjustment = await prisma.inventoryAdjustment.findUnique({
+            where: { id: adjustmentId },
+            include: { items: true }
+        });
+
+        if (!adjustment || adjustment.status !== "COMPLETED") {
+            return { success: false, error: "Hujjat topilmadi yoki u yakunlanmagan." };
+        }
+
+        await prisma.$transaction(async (tx) => {
+            for (const item of adjustment.items) {
+                // Calculate the difference that was originally applied
+                const diff = item.actualQuantity - item.expectedQuantity;
+
+                // Find current inventory
+                const inventory = await tx.inventory.findUnique({
+                    where: {
+                        productId_branchId: {
+                            productId: item.productId,
+                            branchId: adjustment.branchId
+                        }
+                    }
+                });
+
+                if (inventory) {
+                    await tx.inventory.update({
+                        where: { id: inventory.id },
+                        data: {
+                            quantity: inventory.quantity - diff
+                        }
+                    });
+                }
+            }
+
+            await tx.inventoryAdjustment.update({
+                where: { id: adjustmentId },
+                data: { status: "PENDING" }
+            });
+        });
+
+        revalidatePath('/warehouse/inventory');
+        revalidatePath('/warehouse/products');
+        revalidatePath(`/warehouse/inventory/adjustments/${adjustmentId}`);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Revert Adjustment Error:", error);
         return { success: false, error: error.message };
     }
 }
