@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
 
-export default function FilterBar({ categories }: { categories: any[] }) {
+export default function FilterBar({ categories, units = [] }: { categories: any[], units?: string[] }) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [isPending, startTransition] = useTransition();
@@ -26,6 +26,30 @@ export default function FilterBar({ categories }: { categories: any[] }) {
             params.set('category', catId);
         } else {
             params.delete('category');
+        }
+        startTransition(() => {
+            router.replace(`/warehouse/products?${params.toString()}`);
+        });
+    };
+
+    const handleUnitChange = (unit: string) => {
+        const params = new URLSearchParams(searchParams);
+        if (unit) {
+            params.set('unit', unit);
+        } else {
+            params.delete('unit');
+        }
+        startTransition(() => {
+            router.replace(`/warehouse/products?${params.toString()}`);
+        });
+    };
+
+    const handleStockStatusChange = (status: string) => {
+        const params = new URLSearchParams(searchParams);
+        if (status) {
+            params.set('stockStatus', status);
+        } else {
+            params.delete('stockStatus');
         }
         startTransition(() => {
             router.replace(`/warehouse/products?${params.toString()}`);
@@ -64,13 +88,53 @@ export default function FilterBar({ categories }: { categories: any[] }) {
                     color: 'var(--text-primary)',
                     cursor: 'pointer',
                     outline: 'none',
-                    minWidth: '200px'
+                    minWidth: '180px'
                 }}
             >
                 <option value="">Barcha Kategoriyalar</option>
                 {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
+            </select>
+
+            <select
+                defaultValue={searchParams.get('unit')?.toString()}
+                onChange={(e) => handleUnitChange(e.target.value)}
+                style={{
+                    padding: '0.75rem 1rem',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    minWidth: '120px'
+                }}
+            >
+                <option value="">Barcha Birliklar</option>
+                {units.map((u) => (
+                    <option key={u} value={u}>{u}</option>
+                ))}
+            </select>
+
+            <select
+                defaultValue={searchParams.get('stockStatus')?.toString()}
+                onChange={(e) => handleStockStatusChange(e.target.value)}
+                style={{
+                    padding: '0.75rem 1rem',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    minWidth: '160px'
+                }}
+            >
+                <option value="">Barcha Holatlar</option>
+                <option value="IN">✅ Mavjud</option>
+                <option value="LOW">⚠️ Kam qolgan</option>
+                <option value="OUT">❌ Tugagan</option>
             </select>
 
             {isPending && (
