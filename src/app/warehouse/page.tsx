@@ -32,6 +32,7 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
 
     let dailyOrdersData: any[] = [];
     let inventory: any[] = [];
+    let stagnantProducts: any[] = [];
     let periodExpensesData: any[] = [];
 
     let startD = new Date();
@@ -72,7 +73,7 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                 createdAt: { gte: startD, lte: endD },
                 status: 'COMPLETED'
             },
-            include: { items: true }
+            include: { items: true, branch: { select: { name: true } } }
         });
 
         stats.dailySales = dailyOrdersData.reduce((acc, curr) => acc + curr.totalAmount, 0);
@@ -136,10 +137,17 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
         topProducts = await Promise.all(topSales.map(async (sale: any) => {
             const product = await prisma.product.findUnique({
                 where: { id: sale.productId },
-                select: { name: true, sku: true }
+                select: { name: true, sku: true, unit: true }
             });
             return { ...product, totalSold: sale._sum.quantity };
         }));
+
+        // Stagnant Products (In stock but no sales in the period)
+        const soldProductIds = topSales.map(s => s.productId);
+        stagnantProducts = inventory
+            .filter(inv => !soldProductIds.includes(inv.productId) && inv.quantity > 0)
+            .sort((a, b) => (b.product.cost * b.quantity) - (a.product.cost * a.quantity))
+            .slice(0, showModal === 'stagnant_products' ? 100 : 10);
 
         // Dynamic Sales Chart based on period
         const diffTime = Math.abs(endD.getTime() - startD.getTime());
@@ -325,31 +333,34 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                 </Link>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
-                <div className="card" style={{ overflowX: 'auto' }}>
-                    <h3 style={{ fontSize: '1.25rem', marginBottom: '2rem' }}>Savdo Dinamikasi</h3>
-                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '200px', padding: '0 1rem', gap: chartHeights.length > 15 ? '2px' : '0.5rem', minWidth: chartHeights.length > 15 ? `${chartHeights.length * 30}px` : '100%' }}>
-                        {chartHeights.map((height, i) => (
-                            <div key={i} style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }} title={`${chartSalesData[i].toLocaleString()} so'm`}>
-                                <div style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'flex-end' }}>
-                                    <div style={{
-                                        width: '100%', height: `${Math.max(height, 5)}%`,
-                                        background: i === chartHeights.length - 1 ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
-                                        borderRadius: '4px 4px 0 0',
-                                        transition: 'height 0.5s ease'
-                                    }} />
-                                </div>
-                                <span style={{ fontSize: '0.625rem', color: i === chartHeights.length - 1 ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: i === chartHeights.length - 1 ? 'bold' : 'normal', flexShrink: 0, whiteSpace: 'nowrap' }}>{chartLabels[i]}</span>
+            {/* Sales Dynamics - Full Width */}
+            <div className="card" style={{ marginBottom: '2rem', overflowX: 'auto' }}>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '2rem' }}>Savdo Dinamikasi</h3>
+                <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '300px', padding: '0 1rem', gap: chartHeights.length > 15 ? '2px' : '1rem', minWidth: chartHeights.length > 15 ? `${chartHeights.length * 40}px` : '100%' }}>
+                    {chartHeights.map((height, i) => (
+                        <div key={i} style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }} title={`${chartSalesData[i].toLocaleString()} so'm`}>
+                            <div style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'flex-end' }}>
+                                <div style={{
+                                    width: '100%', height: `${Math.max(height, 5)}%`,
+                                    background: i === chartHeights.length - 1 ? 'linear-gradient(to top, var(--accent-primary), #60a5fa)' : 'var(--bg-tertiary)',
+                                    borderRadius: '6px 6px 0 0',
+                                    transition: 'height 0.5s ease',
+                                    boxShadow: i === chartHeights.length - 1 ? '0 0 15px rgba(59, 130, 246, 0.3)' : 'none'
+                                }} />
                             </div>
-                        ))}
-                    </div>
+                            <span style={{ fontSize: '0.75rem', color: i === chartHeights.length - 1 ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: i === chartHeights.length - 1 ? '700' : '500', flexShrink: 0, whiteSpace: 'nowrap' }}>{chartLabels[i]}</span>
+                        </div>
+                    ))}
                 </div>
+            </div>
 
+            {/* Stats Grid - 3 Columns */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
                 <div className="card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                         <h3 style={{ fontSize: '1.25rem', margin: 0 }}>Top Mahsulotlar</h3>
                         <Link href={getModalUrl('top_products')} scroll={false} style={{ fontSize: '0.875rem', color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 500 }}>
-                            Ko'proq ko'rsatish ↓
+                            Ko'proq ↓
                         </Link>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -363,47 +374,73 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.sku}</div>
                                     </div>
                                     <div style={{ padding: '0.25rem 0.5rem', background: 'var(--bg-tertiary)', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700 }}>
-                                        {p.totalSold} dona
+                                        {p.totalSold} {p.unit || 'dona'}
                                     </div>
                                 </div>
                             ))
                         )}
                     </div>
                 </div>
+
+                <div className="card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                        <h3 style={{ fontSize: '1.25rem', margin: 0 }}>Qotib qolgan</h3>
+                        <Link href={getModalUrl('stagnant_products')} scroll={false} style={{ fontSize: '0.875rem', color: 'var(--accent-primary)', textDecoration: 'none', fontWeight: 500 }}>
+                            Ko'proq ↓
+                        </Link>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {stagnantProducts.length === 0 ? (
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Ma'lumot yo'q.</p>
+                        ) : (
+                            stagnantProducts.slice(0, 5).map((inv, i) => (
+                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{inv.product.name}</div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Qoldiq: {inv.quantity} {inv.product.unit || 'dona'}</div>
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--warning)', fontWeight: 600 }}>
+                                        {(inv.product.cost * inv.quantity).toLocaleString()} so'm
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+
+                <div className="card">
+                    <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Filiallar Bo'yicha</h3>
+                    {branchSalesData.length === 0 ? (
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Ma'lumot yo'q.</p>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                            {(() => {
+                                const maxBranchSale = Math.max(...branchSalesData.map(b => b.total), 1);
+                                return branchSalesData.slice(0, 5).map((branch, i) => {
+                                    const widthPercent = (branch.total / maxBranchSale) * 100;
+                                    return (
+                                        <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                                                <span style={{ fontWeight: 600 }}>{branch.name}</span>
+                                                <span style={{ fontSize: '0.75rem' }}>{branch.total.toLocaleString()} so'm</span>
+                                            </div>
+                                            <div style={{ width: '100%', height: '6px', background: 'var(--bg-tertiary)', borderRadius: '3px', overflow: 'hidden' }}>
+                                                <div style={{
+                                                    width: `${widthPercent}%`,
+                                                    height: '100%',
+                                                    background: i === 0 ? 'var(--accent-primary)' : 'var(--accent-secondary)',
+                                                    transition: 'width 0.5s ease'
+                                                }} />
+                                            </div>
+                                        </div>
+                                    );
+                                });
+                            })()}
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {/* Branch Sales Dynamics */}
-            <div className="card" style={{ marginTop: '2rem' }}>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.5rem' }}>Filiallar Bo'yicha Savdo</h3>
-                {branchSalesData.length === 0 ? (
-                    <p style={{ color: 'var(--text-muted)' }}>Hali ma'lumot yo'q.</p>
-                ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {(() => {
-                            const maxBranchSale = Math.max(...branchSalesData.map(b => b.total), 1);
-                            return branchSalesData.map((branch, i) => {
-                                const widthPercent = (branch.total / maxBranchSale) * 100;
-                                return (
-                                    <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-                                            <span style={{ fontWeight: 600 }}>{branch.name}</span>
-                                            <span>{branch.total.toLocaleString()} so'm</span>
-                                        </div>
-                                        <div style={{ width: '100%', height: '8px', background: 'var(--bg-tertiary)', borderRadius: '4px', overflow: 'hidden' }}>
-                                            <div style={{
-                                                width: `${widthPercent}%`,
-                                                height: '100%',
-                                                background: i === 0 ? 'var(--accent-primary)' : 'var(--accent-secondary)',
-                                                transition: 'width 0.5s ease'
-                                            }} />
-                                        </div>
-                                    </div>
-                                );
-                            });
-                        })()}
-                    </div>
-                )}
-            </div>
 
             {/* Branch Active Hours Heatmap */}
             <div className="card" style={{ marginTop: '2rem', overflowX: 'auto' }}>
@@ -478,10 +515,13 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                                 </div>
                                 <h4 style={{ marginBottom: '1rem' }}>Oxirgi tranzaksiyalar:</h4>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                    {dailyOrdersData.slice(0, 10).map((order, i) => (
-                                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)' }}>
-                                            <span>{order.createdAt.toLocaleTimeString()}</span>
-                                            <span style={{ fontWeight: 600 }}>{order.totalAmount.toLocaleString()} so'm</span>
+                                    {dailyOrdersData.slice(0, 10).map((order: any, i: number) => (
+                                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{new Date(order.createdAt).toLocaleTimeString()}</div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--accent-secondary)', fontWeight: 500 }}>{order.branch?.name || 'Asosiy filial'}</div>
+                                            </div>
+                                            <div style={{ fontWeight: 700, fontSize: '1rem' }}>{order.totalAmount.toLocaleString()} so'm</div>
                                         </div>
                                     ))}
                                     {dailyOrdersData.length > 10 && <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Va yana {dailyOrdersData.length - 10} ta tranzaksiya...</p>}
@@ -601,11 +641,31 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                                                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.sku}</div>
                                             </div>
                                             <div style={{ padding: '0.25rem 0.75rem', background: 'var(--bg-tertiary)', borderRadius: '4px', fontSize: '0.875rem', fontWeight: 700 }}>
-                                                {p.totalSold} dona
+                                                {p.totalSold} {p.unit || 'dona'}
                                             </div>
                                         </div>
                                     ))}
                                     {topProducts.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Ma'lumot topilmadi.</p>}
+                                </div>
+                            </div>
+                        )}
+
+                        {showModal === 'stagnant_products' && (
+                            <div>
+                                <p style={{ marginBottom: '1.5rem', color: 'var(--text-secondary)' }}>Sotilmasdan omborda qolgan mahsulotlar (jami qiymat bo'yicha):</p>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                    {stagnantProducts.map((inv, i) => (
+                                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontWeight: 600 }}>{inv.product.name}</div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>SKU: {inv.product.sku} | Qoldiq: {inv.quantity} {inv.product.unit || 'dona'}</div>
+                                            </div>
+                                            <div style={{ fontWeight: 700, color: 'var(--warning)' }}>
+                                                {(inv.product.cost * inv.quantity).toLocaleString()} so'm
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {stagnantProducts.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Ma'lumot yo'q.</p>}
                                 </div>
                             </div>
                         )}

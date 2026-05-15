@@ -224,3 +224,9 @@ h6 {
   --text-muted: #64748b;
   --border-color: #e2e8f0;
 }
+
+@media (max-width: 1200px) {
+  .btn-text {
+    display: none !important;
+  }
+}

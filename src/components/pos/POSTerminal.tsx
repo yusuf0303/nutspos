@@ -27,11 +27,13 @@ export default function POSTerminal({
     initialCustomers,
     initialCategories,
     user,
+    allowNegativeInventory = false,
 }: {
     initialProducts: any[];
     initialCustomers: any[];
     initialCategories: any[];
     user: any;
+    allowNegativeInventory?: boolean;
 }) {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [search, setSearch] = useState('');
@@ -91,10 +93,50 @@ export default function POSTerminal({
         };
         checkShift();
     }, [user?.branchId]);
+    
+    useEffect(() => {
+        const bc = new BroadcastChannel('pos_settings_sync');
+        bc.onmessage = (event) => {
+            if (event.data === 'REFRESH_SETTINGS') {
+                router.refresh();
+            }
+        };
+        return () => bc.close();
+    }, [router]);
     const [isNewInput, setIsNewInput] = useState<boolean>(true);
     const [maxDiscountLimit, setMaxDiscountLimit] = useState(30);
     const [isCreating, setIsCreating] = useState(false);
     const { showToast } = useToast();
+
+    useEffect(() => {
+        const handleGlobalKeydown = (e: KeyboardEvent) => {
+            if (e.key === 'F2') {
+                e.preventDefault();
+                searchRef.current?.focus();
+                return;
+            }
+
+            const target = e.target as HTMLElement;
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+                // If it's the search input, handleSearchKeyDown will handle Enter
+                return;
+            }
+
+            // Focus search input on printable character
+            if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                searchRef.current?.focus();
+                return;
+            }
+
+            // Global Enter handling for scanners when not focused
+            if (e.key === 'Enter' && search) {
+                e.preventDefault();
+                processBarcodeSearch();
+            }
+        };
+        window.addEventListener('keydown', handleGlobalKeydown);
+        return () => window.removeEventListener('keydown', handleGlobalKeydown);
+    }, [search]); // re-bind when search changes to have latest value
 
     const searchRef = useRef<HTMLInputElement>(null);
     const quantityInputRef = useRef<HTMLInputElement>(null);
@@ -119,6 +161,42 @@ export default function POSTerminal({
         return pool;
     }, [initialProducts, search, activeCategoryId]);
 
+    const processBarcodeSearch = useCallback(() => {
+        if (!search) return;
+        // Priority 1: Exact SKU match (for barcodes)
+        const exactMatch = initialProducts.find(p => p.sku.toLowerCase() === search.toLowerCase());
+        if (exactMatch) {
+            const stock = getStock(exactMatch);
+            if (!allowNegativeInventory && stock <= 0) {
+                showToast("Mahsulot qoldig'i yo'q!", "error");
+                setSearch('');
+                return;
+            }
+            addToCart(exactMatch);
+            setSearch('');
+            return;
+        }
+
+        // Priority 2: Only one result in filtered list
+        if (filteredProducts.length === 1) {
+            const prod = filteredProducts[0];
+            const stock = getStock(prod);
+            if (!allowNegativeInventory && stock <= 0) {
+                showToast("Mahsulot qoldig'i yo'q!", "error");
+                setSearch('');
+                return;
+            }
+            addToCart(prod);
+            setSearch('');
+        }
+    }, [search, initialProducts, filteredProducts, allowNegativeInventory]);
+
+    const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            processBarcodeSearch();
+        }
+    };
+
     const getStock = (product: any): number => {
         if (!product.inventory || product.inventory.length === 0) return 0;
         return product.inventory.reduce((sum: number, inv: any) => sum + inv.quantity, 0);
@@ -130,13 +208,14 @@ export default function POSTerminal({
             const existing = prev.find((item) => item.product.id === product.id);
             if (existing) {
                 const currentQ = Number(existing.quantity) || 0;
-                if (currentQ >= stock && stock > 0) return prev;
+                if (!allowNegativeInventory && currentQ >= stock) return prev;
                 return prev.map((item) =>
                     item.product.id === product.id
                         ? { ...item, quantity: currentQ + 1 }
                         : item
                 );
             }
+            if (!allowNegativeInventory && stock <= 0) return prev;
             return [...prev, { product, quantity: 1, discount: 0, discountType: 'PERCENT' }];
         });
     };
@@ -151,7 +230,7 @@ export default function POSTerminal({
                 const newQ = (Number(item.quantity) || 0) + delta;
                 if (newQ <= 0) return [];
                 const stock = getStock(item.product);
-                if (delta > 0 && newQ > stock && stock > 0) return [item];
+                if (!allowNegativeInventory && delta > 0 && newQ > stock) return [item];
                 return [{ ...item, quantity: newQ }];
             })
         );
@@ -171,7 +250,7 @@ export default function POSTerminal({
                 const num = Number(val);
                 if (isNaN(num) || num < 0) return item;
                 const stock = getStock(item.product);
-                if (num > stock && stock > 0) return { ...item, quantity: stock };
+                if (!allowNegativeInventory && num > stock) return { ...item, quantity: stock };
                 return { ...item, quantity: val };
             })
         );
@@ -624,6 +703,7 @@ export default function POSTerminal({
                                 <input 
                                     ref={quantityInputRef}
                                     value={tempQuantity} 
+                                    inputMode="none"
                                     onChange={e => { 
                                         const val = e.target.value;
                                         if (isDiscreteUnit(editingItem?.product.unit) && val.includes('.')) return;
@@ -639,6 +719,7 @@ export default function POSTerminal({
                                 <input 
                                     ref={priceInputRef}
                                     value={tempPrice} 
+                                    inputMode="none"
                                     onChange={e => { setTempPrice(e.target.value); setIsNewInput(false); }}
                                     onFocus={() => { setEditMode('PRICE'); setIsNewInput(false); }}
                                     style={{ background: 'transparent', border: 'none', color: 'inherit', fontSize: '1.25rem', fontWeight: 700, textAlign: 'center', outline: 'none', width: '100%' }}
@@ -964,31 +1045,42 @@ export default function POSTerminal({
             {/* =========================  LEFT PANEL – Products  ========================= */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 {/* Top Bar */}
-                <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
+                <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
                     <div style={{ flex: 1, display: 'flex', position: 'relative' }}>
                         <div style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>🔍</div>
                         <input
                             ref={searchRef}
                             type="text"
-                            placeholder="Shtrix kod yoki nom bo'yicha qidirish... (F2)"
+                            placeholder="Qidirish... (F2)"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            style={{ flex: 1, padding: '0.6rem 1rem 0.6rem 2.2rem', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)', outline: 'none', fontSize: '0.875rem' }}
+                            onKeyDown={handleSearchKeyDown}
+                            style={{ flex: 1, padding: '0.6rem 2.2rem 0.6rem 2.2rem', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)', outline: 'none', fontSize: '0.875rem' }}
                         />
+                        {search && (
+                            <button 
+                                onClick={() => { setSearch(''); searchRef.current?.focus(); }}
+                                style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            >
+                                ✕
+                            </button>
+                        )}
                     </div>
                     {heldOrders.length > 0 && (
                         <button onClick={() => setShowHeldOrders(true)} style={{ padding: '0.6rem 1rem', background: 'var(--warning)', color: '#fff', border: 'none', borderRadius: 'var(--radius-full)', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: 'var(--shadow-sm)', whiteSpace: 'nowrap' }}>
-                            <span>⏸ Kutishdagi</span>
+                            <span>⏸ <span className="btn-text">Kutishdagi</span></span>
                             <span style={{ background: '#fff', color: 'var(--warning)', padding: '0.1rem 0.4rem', borderRadius: '99px', fontSize: '0.75rem' }}>{heldOrders.length}</span>
                         </button>
                     )}
                     <button onClick={() => setShowLookupModal(true)} style={{ padding: '0.5rem 1rem', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        🔍 Cheklar
+                        <span>🔍 <span className="btn-text">Cheklar</span></span>
                     </button>
                     <button onClick={toggleFullscreen} style={{ padding: '0.5rem 0.75rem', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="To'liq ekran">
                         {isFullscreen ? '⛕' : '⛶'}
                     </button>
-                    <Link href="/pos" className="btn btn-secondary" style={{ padding: '0.65rem 1rem', fontSize: '0.875rem', flexShrink: 0 }}>📊 Dashboard</Link>
+                    <Link href="/pos" className="btn btn-secondary" style={{ padding: '0.65rem 1rem', fontSize: '0.875rem', flexShrink: 0 }}>
+                        📊 <span className="btn-text">Dashboard</span>
+                    </Link>
                 </div>
 
                 {/* Category Tabs */}
@@ -1018,7 +1110,7 @@ export default function POSTerminal({
                         {filteredProducts.map((product) => {
                             const stock = getStock(product);
                             const inCart = cart.find((i) => i.product.id === product.id);
-                            const outOfStock = stock === 0 && product.inventory?.length > 0;
+                            const outOfStock = !allowNegativeInventory && stock <= 0;
                             return (
                                 <div
                                     key={product.id}
@@ -1221,15 +1313,15 @@ export default function POSTerminal({
                                     <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                             <span style={{ fontSize: '0.8rem', color: 'var(--text-primary)', width: '60px' }}>💵 Naqd:</span>
-                                            <input ref={splitCashRef} type="text" inputMode="numeric" placeholder="0" className="no-spinners" value={splitCash} onFocus={() => setActiveSplitInput('CASH')} onBlur={() => setActiveSplitInput(null)} onChange={e => setSplitCash(e.target.value)} style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-sm)', border: activeSplitInput === 'CASH' ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
+                                            <input ref={splitCashRef} type="text" inputMode="none" placeholder="0" className="no-spinners" value={splitCash} onFocus={() => setActiveSplitInput('CASH')} onBlur={() => setActiveSplitInput(null)} onChange={e => setSplitCash(e.target.value)} style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-sm)', border: activeSplitInput === 'CASH' ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                             <span style={{ fontSize: '0.8rem', color: 'var(--text-primary)', width: '60px' }}>💳 Karta:</span>
-                                            <input ref={splitCardRef} type="text" inputMode="numeric" placeholder="0" className="no-spinners" value={splitCard} onFocus={() => setActiveSplitInput('CARD')} onBlur={() => setActiveSplitInput(null)} onChange={e => setSplitCard(e.target.value)} style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-sm)', border: activeSplitInput === 'CARD' ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
+                                            <input ref={splitCardRef} type="text" inputMode="none" placeholder="0" className="no-spinners" value={splitCard} onFocus={() => setActiveSplitInput('CARD')} onBlur={() => setActiveSplitInput(null)} onChange={e => setSplitCard(e.target.value)} style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-sm)', border: activeSplitInput === 'CARD' ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                             <span style={{ fontSize: '0.8rem', color: 'var(--text-primary)', width: '60px' }}>📱 Click:</span>
-                                            <input ref={splitClickRef} type="text" inputMode="numeric" placeholder="0" className="no-spinners" value={splitClick} onFocus={() => setActiveSplitInput('CLICK')} onBlur={() => setActiveSplitInput(null)} onChange={e => setSplitClick(e.target.value)} style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-sm)', border: activeSplitInput === 'CLICK' ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
+                                            <input ref={splitClickRef} type="text" inputMode="none" placeholder="0" className="no-spinners" value={splitClick} onFocus={() => setActiveSplitInput('CLICK')} onBlur={() => setActiveSplitInput(null)} onChange={e => setSplitClick(e.target.value)} style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-sm)', border: activeSplitInput === 'CLICK' ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
                                         </div>
 
                                 {activeSplitInput && (

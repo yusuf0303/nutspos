@@ -23,6 +23,7 @@ export async function updateSetting(key: string, value: string) {
             create: { key, value }
         });
         revalidatePath('/warehouse/settings');
+        revalidatePath('/pos/terminal');
         return { success: true };
     } catch (error: any) {
         console.error(`Update Setting Error [${key}]:`, error);

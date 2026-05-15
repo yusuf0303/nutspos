@@ -33,7 +33,7 @@ export default async function TerminalPage() {
     }
 
     // 3. Load POS data
-    const [products, customers, categories] = await Promise.all([
+    const [products, customers, categories, allowNegativeInv] = await Promise.all([
         prisma.product.findMany({ 
             include: { 
                 category: true, 
@@ -44,6 +44,7 @@ export default async function TerminalPage() {
         }),
         prisma.customer.findMany({ orderBy: { name: 'asc' } }),
         prisma.category.findMany({ orderBy: { name: 'asc' } }),
+        import('@/app/actions/settingActions').then(m => m.getSetting('ALLOW_NEGATIVE_INVENTORY', 'false'))
     ]);
 
     return (
@@ -53,6 +54,7 @@ export default async function TerminalPage() {
                 initialCustomers={customers as any[]}
                 initialCategories={categories as any[]}
                 user={user as any}
+                allowNegativeInventory={allowNegativeInv === 'true'}
             />
         </div>
     );
