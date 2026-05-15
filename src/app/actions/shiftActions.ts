@@ -87,6 +87,33 @@ export async function getCurrentShift(branchId: string) {
                 user: true
             }
         });
+
+        if (shift) {
+            const shiftDurationHours = (Date.now() - shift.createdAt.getTime()) / (1000 * 60 * 60);
+            
+            // Agar smena 24 soatdan ko'p ochiq bo'lsa, uni avtomatik yopamiz
+            if (shiftDurationHours >= 24) {
+                const cashSales = shift.orders
+                    .filter(o => o.status === 'COMPLETED')
+                    .reduce((acc, o) => acc + o.cashAmount, 0);
+
+                const expectedCash = shift.startingCash + cashSales;
+
+                await prisma.shift.update({
+                    where: { id: shift.id },
+                    data: {
+                        status: 'CLOSED',
+                        endingCash: expectedCash,
+                        expectedCash: expectedCash,
+                        endTime: new Date()
+                    }
+                });
+
+                revalidatePath('/pos');
+                return { success: true, shift: null };
+            }
+        }
+
         return { success: true, shift };
     } catch (error: any) {
         return { success: false, error: error.message };

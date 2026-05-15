@@ -98,6 +98,22 @@ export async function createOrder(data: {
         const cashbackPercentStr = await getSetting('CASHBACK_PERCENT', '1');
         const cashbackPercent = parseFloat(cashbackPercentStr) / 100;
 
+        // 1. Check if shift is valid (less than 24h old) if shiftId is provided
+        if (data.shiftId) {
+            const shift = await prisma.shift.findUnique({
+                where: { id: data.shiftId }
+            });
+
+            if (shift && shift.status === 'OPEN') {
+                const shiftDurationHours = (Date.now() - shift.createdAt.getTime()) / (1000 * 60 * 60);
+                if (shiftDurationHours >= 24) {
+                    throw new Error("Smena muddati (24 soat) tugagan. Iltimos, yangi smena oching.");
+                }
+            } else if (shift && shift.status === 'CLOSED') {
+                throw new Error("Ushbu smena yopilgan. Iltimos, yangi smena oching.");
+            }
+        }
+
         const order = await prisma.$transaction(async (tx: any) => {
             // 1. Create the order
             const newOrder = await tx.order.create({
