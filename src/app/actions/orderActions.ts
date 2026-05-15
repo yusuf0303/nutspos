@@ -24,24 +24,24 @@ export async function refundOrder(orderId: string) {
 
             // 2. Restore inventory for each item at the CORRECT branch
             for (const item of order.items) {
-                // Find inventory for this specific branch
-                const inventory = await tx.inventory.findFirst({
+                await tx.inventory.upsert({
                     where: {
+                        productId_branchId: {
+                            productId: item.productId,
+                            branchId: order.branchId
+                        }
+                    },
+                    update: {
+                        quantity: {
+                            increment: item.quantity
+                        }
+                    },
+                    create: {
                         productId: item.productId,
-                        branchId: order.branchId
+                        branchId: order.branchId,
+                        quantity: item.quantity
                     }
                 });
-
-                if (inventory) {
-                    await tx.inventory.update({
-                        where: { id: inventory.id },
-                        data: {
-                            quantity: {
-                                increment: item.quantity
-                            }
-                        }
-                    });
-                }
             }
 
             // 3. Reverse customer points if applicable
@@ -128,24 +128,24 @@ export async function createOrder(data: {
 
             // 2. Update inventory
             for (const item of data.items) {
-                // Try to find inventory for this branch, otherwise fallback to "Main Warehouse"
-                const inventory = await tx.inventory.findFirst({
+                await tx.inventory.upsert({
                     where: {
+                        productId_branchId: {
+                            productId: item.productId,
+                            branchId: data.branchId || null
+                        }
+                    },
+                    update: {
+                        quantity: {
+                            decrement: item.quantity
+                        }
+                    },
+                    create: {
                         productId: item.productId,
-                        branchId: data.branchId || null
+                        branchId: data.branchId || null,
+                        quantity: -item.quantity
                     }
                 });
-
-                if (inventory) {
-                    await tx.inventory.update({
-                        where: { id: inventory.id },
-                        data: {
-                            quantity: {
-                                decrement: item.quantity
-                            }
-                        }
-                    });
-                }
             }
 
             // 3. Update customer cashback (points) if present
