@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 
 export default function ShiftList({ initialShifts, linkPrefix = '/warehouse/shifts' }: { initialShifts: any[], linkPrefix?: string }) {
-    const [shifts] = useState(initialShifts);
+    const shifts = initialShifts;
 
     const getStatusStyle = (status: string) => {
         switch (status) {

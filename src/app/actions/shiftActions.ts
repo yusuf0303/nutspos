@@ -30,6 +30,8 @@ export async function openShift(data: {
             }
         });
 
+        revalidatePath('/pos');
+        revalidatePath('/warehouse/shifts');
         return { success: true, shift };
     } catch (error: any) {
         console.error("Open Shift Error:", error);
@@ -67,6 +69,8 @@ export async function closeShift(shiftId: string, data: {
             }
         });
 
+        revalidatePath('/pos');
+        revalidatePath('/warehouse/shifts');
         return { success: true };
     } catch (error: any) {
         console.error("Close Shift Error:", error);

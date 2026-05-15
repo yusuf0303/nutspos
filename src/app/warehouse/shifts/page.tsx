@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import ShiftList from '@/components/warehouse/ShiftList';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ShiftsPage() {
     const shifts = await prisma.shift.findMany({
         include: {
