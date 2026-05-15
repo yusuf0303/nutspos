@@ -34,8 +34,8 @@ export default async function ProductsPage({
             AND: [
                 searchTerm ? {
                     OR: [
-                        { name: { contains: searchTerm, mode: 'insensitive' } },
-                        { sku: { contains: searchTerm, mode: 'insensitive' } }
+                        { name: { contains: searchTerm } },
+                        { sku: { contains: searchTerm } }
                     ]
                 } : {},
                 categoryId ? { categoryId } : {},
