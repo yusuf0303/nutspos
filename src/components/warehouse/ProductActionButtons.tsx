@@ -2,11 +2,12 @@
 
 import { deleteProduct } from '@/app/actions/productActions';
 import { useToast } from '@/context/ToastContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function ProductActionButtons({ productId }: { productId: string }) {
     const { showToast } = useToast();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     const handleDelete = async () => {
         if (confirm("Ushbu mahsulotni o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi.")) {
@@ -23,7 +24,7 @@ export default function ProductActionButtons({ productId }: { productId: string 
     return (
         <>
             <a
-                href={`/warehouse/products/${productId}/edit`}
+                href={`/warehouse/products/${productId}/edit?${searchParams.toString()}`}
                 className="btn btn-secondary"
                 style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
             >

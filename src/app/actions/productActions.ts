@@ -11,7 +11,8 @@ export async function createProduct(data: {
     categoryId: string,
     supplierId?: string,
     unit?: string,
-    description?: string
+    description?: string,
+    barcodes?: string[]
 }) {
     try {
         const product = await prisma.$transaction(async (tx: any) => {
@@ -24,7 +25,10 @@ export async function createProduct(data: {
                     categoryId: data.categoryId,
                     supplierId: data.supplierId,
                     unit: data.unit || 'dona',
-                    description: data.description
+                    description: data.description,
+                    barcodes: {
+                        create: (data.barcodes || []).map(code => ({ code }))
+                    }
                 }
             });
 
@@ -45,7 +49,7 @@ export async function createProduct(data: {
     } catch (error: any) {
         console.error("Create Product Error:", error);
         if (error.code === 'P2002') {
-            return { success: false, error: "Ushbu mahsulot kodi (SKU) allaqachon bazada mavjud! Iltimos, boshqa kod kiriting." };
+            return { success: false, error: "Ushbu mahsulot kodi (SKU yoki Barcode) allaqachon bazada mavjud!" };
         }
         return { success: false, error: error.message };
     }
@@ -59,12 +63,31 @@ export async function updateProduct(id: string, data: {
     categoryId?: string,
     supplierId?: string,
     unit?: string,
-    description?: string
+    description?: string,
+    barcodes?: string[]
 }) {
     try {
-        await prisma.product.update({
-            where: { id },
-            data
+        const { barcodes, ...fields } = data;
+        
+        await prisma.$transaction(async (tx: any) => {
+            // Update barcodes if provided
+            if (barcodes !== undefined) {
+                await tx.barcode.deleteMany({ where: { productId: id } });
+                await tx.product.update({
+                    where: { id },
+                    data: {
+                        ...fields,
+                        barcodes: {
+                            create: barcodes.map(code => ({ code }))
+                        }
+                    }
+                });
+            } else {
+                await tx.product.update({
+                    where: { id },
+                    data: fields
+                });
+            }
         });
 
         revalidatePath('/warehouse/products');
@@ -72,7 +95,7 @@ export async function updateProduct(id: string, data: {
     } catch (error: any) {
         console.error("Update Product Error:", error);
         if (error.code === 'P2002') {
-            return { success: false, error: "Ushbu mahsulot kodi (SKU) allaqachon bazada mavjud! Iltimos, boshqa kod kiriting." };
+            return { success: false, error: "Ushbu mahsulot kodi (SKU yoki Barcode) allaqachon bazada mavjud!" };
         }
         return { success: false, error: error.message };
     }

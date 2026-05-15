@@ -34,6 +34,7 @@ export default function AddProductForm({ categories, suppliers }: { categories: 
         unit: 'dona',
         description: ''
     });
+    const [barcodes, setBarcodes] = useState<string[]>([]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,7 +48,8 @@ export default function AddProductForm({ categories, suppliers }: { categories: 
             categoryId: formData.categoryId,
             supplierId: formData.supplierId || undefined,
             unit: formData.unit,
-            description: formData.description
+            description: formData.description,
+            barcodes: barcodes.filter(b => b.trim() !== '')
         });
 
         setLoading(false);
@@ -59,11 +61,19 @@ export default function AddProductForm({ categories, suppliers }: { categories: 
         }
     };
 
+    const addBarcode = () => setBarcodes([...barcodes, '']);
+    const removeBarcode = (index: number) => setBarcodes(barcodes.filter((_, i) => i !== index));
+    const updateBarcode = (index: number, val: string) => {
+        const newBarcodes = [...barcodes];
+        newBarcodes[index] = val;
+        setBarcodes(newBarcodes);
+    };
+
     const iStyle = { width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' };
     const labelStyle = { display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem', fontWeight: 600 };
 
     return (
-        <div style={{ maxWidth: '640px', margin: '0 auto', animation: 'fadeIn 0.5s' }}>
+        <div style={{ maxWidth: '640px', margin: '0 auto', paddingBottom: '4rem', animation: 'fadeIn 0.5s' }}>
             <header style={{ marginBottom: '2rem' }}>
                 <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Yangi Mahsulot</h1>
                 <p style={{ color: 'var(--text-secondary)' }}>Katalogga yangi mahsulot qo'shing.</p>
@@ -77,8 +87,41 @@ export default function AddProductForm({ categories, suppliers }: { categories: 
                         <input required type="text" style={iStyle} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                     </div>
                     <div className="form-group">
-                        <label style={labelStyle}>SKU / Artikulyar</label>
+                        <label style={labelStyle}>Asosiy SKU / Barcode</label>
                         <input required type="text" style={iStyle} value={formData.sku} onChange={(e) => setFormData({ ...formData, sku: e.target.value })} />
+                    </div>
+                </div>
+
+                {/* Additional Barcodes */}
+                <div className="form-group">
+                    <label style={labelStyle}>Qo'shimcha Barcodelar</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {barcodes.map((code, index) => (
+                            <div key={index} style={{ display: 'flex', gap: '0.5rem' }}>
+                                <input 
+                                    type="text" 
+                                    style={iStyle} 
+                                    value={code} 
+                                    placeholder="Barcode kiriting..."
+                                    onChange={(e) => updateBarcode(index, e.target.value)} 
+                                />
+                                <button 
+                                    type="button" 
+                                    onClick={() => removeBarcode(index)}
+                                    style={{ padding: '0 1rem', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        ))}
+                        <button 
+                            type="button" 
+                            onClick={addBarcode}
+                            className="btn btn-secondary"
+                            style={{ alignSelf: 'flex-start', padding: '0.5rem 1rem', fontSize: '0.8rem' }}
+                        >
+                            + Yana qo'shish
+                        </button>
                     </div>
                 </div>
 

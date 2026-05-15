@@ -110,7 +110,17 @@ export default async function ProductsPage({
                     <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Mahsulotlar Galereyasi</h1>
                     <p style={{ color: 'var(--text-secondary)' }}>Katalog, zaxira tafsilotlari va narxlarni boshqaring.</p>
                 </div>
-                <a href="/warehouse/products/new" className="btn">+ Mahsulot Qo'shish</a>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    {(searchTerm || categoryId || stockStatus || unit || sortBy !== 'updatedAt') && (
+                        <Link 
+                            href="/warehouse/products" 
+                            style={{ fontSize: '0.875rem', color: 'var(--danger)', textDecoration: 'none', fontWeight: 600, padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                        >
+                            ✕ Barchasini Tozalash
+                        </Link>
+                    )}
+                    <a href="/warehouse/products/new" className="btn">+ Mahsulot Qo'shish</a>
+                </div>
             </header>
 
             <FilterBar categories={categories} units={units} />

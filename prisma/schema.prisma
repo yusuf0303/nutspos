@@ -88,9 +88,17 @@ model Product {
   purchaseItems PurchaseOrderItem[]
   adjustmentItems AdjustmentItem[]
   transferItems   TransferItem[]
+  barcodes      Barcode[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Barcode {
+  id        String  @id @default(cuid())
+  code      String  @unique
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Inventory {

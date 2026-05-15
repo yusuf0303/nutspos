@@ -37,6 +37,7 @@ export default async function TerminalPage() {
         prisma.product.findMany({ 
             include: { 
                 category: true, 
+                barcodes: true,
                 inventory: {
                     where: { branchId: user.branchId || undefined }
                 } 

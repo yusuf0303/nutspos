@@ -155,7 +155,8 @@ export default function POSTerminal({
             pool = pool.filter(
                 (p) =>
                     p.name.toLowerCase().includes(q) ||
-                    p.sku.toLowerCase().includes(q)
+                    p.sku.toLowerCase().includes(q) ||
+                    p.barcodes?.some((b: any) => b.code.toLowerCase().includes(q))
             );
         }
         return pool;
@@ -163,8 +164,11 @@ export default function POSTerminal({
 
     const processBarcodeSearch = useCallback(() => {
         if (!search) return;
-        // Priority 1: Exact SKU match (for barcodes)
-        const exactMatch = initialProducts.find(p => p.sku.toLowerCase() === search.toLowerCase());
+        // Priority 1: Exact SKU or Barcode match
+        const exactMatch = initialProducts.find(p => 
+            p.sku.toLowerCase() === search.toLowerCase() ||
+            p.barcodes?.some((b: any) => b.code.toLowerCase() === search.toLowerCase())
+        );
         if (exactMatch) {
             const stock = getStock(exactMatch);
             if (!allowNegativeInventory && stock <= 0) {
