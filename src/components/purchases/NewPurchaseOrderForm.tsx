@@ -248,8 +248,9 @@ export default function NewPurchaseOrderForm({ suppliers, products, branches, us
                                         <input
                                             type="number"
                                             value={item.quantity === '' ? '' : item.quantity}
-                                            onChange={(e) => updateItem(index, 'quantity', e.target.value === '' ? '' : parseInt(e.target.value))}
-                                            min="1"
+                                            onChange={(e) => updateItem(index, 'quantity', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                            step="any"
+                                            min="0"
                                             style={{ width: '100%', padding: '0.5rem', paddingRight: '3rem', borderRadius: '4px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
                                             required
                                         />
