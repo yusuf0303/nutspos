@@ -14,7 +14,11 @@ const statusLabel: Record<string, string> = {
     CANCELLED: 'Bekor qilindi'
 };
 
+import { deleteTransfer } from '@/app/actions/transferActions';
+import { useToast } from '@/context/ToastContext';
+
 export default function TransferList({ transfers }: { transfers: any[] }) {
+    const { showToast } = useToast();
     const formatDate = (d: Date) => {
         const date = new Date(d);
         const dd = String(date.getDate()).padStart(2, '0');
@@ -23,6 +27,17 @@ export default function TransferList({ transfers }: { transfers: any[] }) {
         const hh = String(date.getHours()).padStart(2, '0');
         const min = String(date.getMinutes()).padStart(2, '0');
         return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
+    };
+
+    const handleDelete = async (id: string) => {
+        if (confirm("Ushbu hujjatni o'chirishni tasdiqlaysizmi?")) {
+            const res = await deleteTransfer(id);
+            if (res.success) {
+                showToast("Hujjat o'chirildi", "success");
+            } else {
+                showToast("Xato: " + res.error, "error");
+            }
+        }
     };
 
     return (
@@ -48,11 +63,12 @@ export default function TransferList({ transfers }: { transfers: any[] }) {
                             <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', fontWeight: 600 }}>Qabul Qiluvchi</th>
                             <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', fontWeight: 600, textAlign: 'center' }}>Mahsulotlar</th>
                             <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', fontWeight: 600, textAlign: 'center' }}>Holat</th>
+                            <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', fontWeight: 600, textAlign: 'right' }}>Amallar</th>
                         </tr>
                     </thead>
                     <tbody>
                         {transfers.length === 0 ? (
-                            <tr><td colSpan={7} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>Ko'chirish hujjatlari topilmadi</td></tr>
+                            <tr><td colSpan={8} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>Ko'chirish hujjatlari topilmadi</td></tr>
                         ) : (
                             transfers.map((t: any) => (
                                 <tr key={t.id} className="table-row-hover" style={{ borderBottom: '1px solid var(--border-color)' }}>
@@ -78,6 +94,17 @@ export default function TransferList({ transfers }: { transfers: any[] }) {
                                         <span style={{ padding: '0.25rem 0.75rem', background: `${statusColor[t.status]}20`, color: statusColor[t.status], borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', fontWeight: 600 }}>
                                             {statusLabel[t.status] || t.status}
                                         </span>
+                                    </td>
+                                    <td style={{ padding: '1rem', textAlign: 'right' }}>
+                                        {t.status === 'PENDING' && (
+                                            <button 
+                                                onClick={() => handleDelete(t.id)}
+                                                style={{ padding: '0.4rem', color: 'var(--danger)', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.1rem' }}
+                                                title="Hujjatni o'chirish"
+                                            >
+                                                🗑️
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))

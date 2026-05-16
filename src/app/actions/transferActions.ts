@@ -175,3 +175,30 @@ export async function getTransfers() {
         return { success: false, error: error.message };
     }
 }
+// 6. Delete Transfer Document (Only if PENDING)
+export async function deleteTransfer(id: string) {
+    try {
+        const transfer = await prisma.stockTransfer.findUnique({
+            where: { id }
+        });
+
+        if (!transfer || transfer.status !== "PENDING") {
+            return { success: false, error: "Hujjat topilmadi yoki allaqachon yakunlangan." };
+        }
+
+        // Delete items first due to foreign key constraints if not cascaded
+        await prisma.transferItem.deleteMany({
+            where: { transferId: id }
+        });
+
+        await prisma.stockTransfer.delete({
+            where: { id }
+        });
+
+        revalidatePath('/warehouse/transfers');
+        return { success: true };
+    } catch (error: any) {
+        console.error("Delete Transfer Error:", error);
+        return { success: false, error: error.message };
+    }
+}
