@@ -78,6 +78,72 @@ export default function POSTerminal({
     const [foundOrder, setFoundOrder] = useState<any>(null);
     const [isSearchingOrder, setIsSearchingOrder] = useState(false);
     const [recentOrders, setRecentOrders] = useState<any[]>([]);
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    // 1. Sahifa yuklanganda localStorage dan ma'lumotlarni o'qib olish
+    useEffect(() => {
+        const savedHeld = localStorage.getItem('pos_held_orders');
+        if (savedHeld) {
+            try {
+                const parsed = JSON.parse(savedHeld);
+                // Timestamp ni Date obyektiga qaytarish
+                const withDates = parsed.map((ho: any) => ({
+                    ...ho,
+                    timestamp: new Date(ho.timestamp)
+                }));
+                setHeldOrders(withDates);
+            } catch (e) {
+                console.error("Held orders yuklashda xato:", e);
+            }
+        }
+
+        const savedCart = localStorage.getItem('pos_current_cart');
+        if (savedCart) {
+            try {
+                setCart(JSON.parse(savedCart));
+            } catch (e) {
+                console.error("Savatni yuklashda xato:", e);
+            }
+        }
+
+        const savedCustomer = localStorage.getItem('pos_current_customer');
+        if (savedCustomer) {
+            try {
+                const { id, query } = JSON.parse(savedCustomer);
+                setCustomerId(id);
+                setCustomerQuery(query);
+            } catch (e) {
+                console.error("Mijozni yuklashda xato:", e);
+            }
+        }
+
+        const savedDiscount = localStorage.getItem('pos_current_discount');
+        if (savedDiscount) {
+            try {
+                const { amount, type, cashback } = JSON.parse(savedDiscount);
+                setGlobalDiscount(amount);
+                setGlobalDiscountType(type);
+                setSpentCashback(cashback);
+            } catch (e) {
+                console.error("Chegirmani yuklashda xato:", e);
+            }
+        }
+        setIsLoaded(true);
+    }, []);
+
+    // 2. Kutishdagi cheklar o'zgarganda saqlash
+    useEffect(() => {
+        if (!isLoaded) return;
+        localStorage.setItem('pos_held_orders', JSON.stringify(heldOrders));
+    }, [heldOrders, isLoaded]);
+
+    // 3. Joriy holatni (savat, mijoz, chegirma) saqlash
+    useEffect(() => {
+        if (!isLoaded) return;
+        localStorage.setItem('pos_current_cart', JSON.stringify(cart));
+        localStorage.setItem('pos_current_customer', JSON.stringify({ id: customerId, query: customerQuery }));
+        localStorage.setItem('pos_current_discount', JSON.stringify({ amount: globalDiscount, type: globalDiscountType, cashback: spentCashback }));
+    }, [cart, customerId, customerQuery, globalDiscount, globalDiscountType, spentCashback, isLoaded]);
 
     useEffect(() => {
         const checkShift = async () => {
