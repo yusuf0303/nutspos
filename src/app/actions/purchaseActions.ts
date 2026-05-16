@@ -6,6 +6,8 @@ import { revalidatePath } from 'next/cache';
 export async function createPurchaseOrder(data: {
     supplierId: string;
     userId: string;
+    branchId: string;
+    note?: string;
     items: { productId: string; quantity: number; cost: number; price: number }[];
 }) {
     try {
@@ -20,12 +22,17 @@ export async function createPurchaseOrder(data: {
                 });
             }
 
+            const documentNumber = `PO-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
+
             return await tx.purchaseOrder.create({
                 data: {
+                    documentNumber,
                     supplierId: data.supplierId,
                     userId: data.userId,
+                    branchId: data.branchId,
                     totalAmount,
                     status: 'PENDING',
+                    note: data.note,
                     items: {
                         create: data.items.map((item: any) => ({
                             productId: item.productId,
@@ -67,8 +74,8 @@ export async function receivePurchaseOrder(poId: string) {
             // 2. Update inventory and product cost
             for (const item of po.items) {
                 await tx.inventory.upsert({
-                    where: { productId_branchId: { productId: item.productId, branchId: null } },
-                    create: { productId: item.productId, quantity: item.quantity, branchId: null },
+                    where: { productId_branchId: { productId: item.productId, branchId: po.branchId } },
+                    create: { productId: item.productId, quantity: item.quantity, branchId: po.branchId },
                     update: { quantity: { increment: item.quantity } }
                 });
 

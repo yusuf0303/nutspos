@@ -5,9 +5,11 @@ import { createPurchaseOrder } from '@/app/actions/purchaseActions';
 import { useToast } from '@/context/ToastContext';
 import { useRouter } from 'next/navigation';
 
-export default function NewPurchaseOrderForm({ suppliers, products }: { suppliers: any[], products: any[] }) {
+export default function NewPurchaseOrderForm({ suppliers, products, branches }: { suppliers: any[], products: any[], branches: any[] }) {
     const { showToast } = useToast();
     const [supplierId, setSupplierId] = useState('');
+    const [branchId, setBranchId] = useState('');
+    const [note, setNote] = useState('');
     const [items, setItems] = useState<{ productId: string, quantity: number | '', cost: number | '', price: number | '' }[]>([]);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -28,8 +30,8 @@ export default function NewPurchaseOrderForm({ suppliers, products }: { supplier
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!supplierId || items.length === 0) {
-            showToast("Iltimos, yetkazib beruvchi va kamida bitta mahsulotni tanlang", "warning");
+        if (!supplierId || !branchId || items.length === 0) {
+            showToast("Iltimos, yetkazib beruvchi, filial va kamida bitta mahsulotni tanlang", "warning");
             return;
         }
 
@@ -44,6 +46,8 @@ export default function NewPurchaseOrderForm({ suppliers, products }: { supplier
 
             const res = await createPurchaseOrder({
                 supplierId,
+                branchId,
+                note,
                 userId: 'clw1234567890', // Placeholder
                 items: formattedItems
             });
@@ -69,17 +73,42 @@ export default function NewPurchaseOrderForm({ suppliers, products }: { supplier
             </header>
 
             <div className="card" style={{ marginBottom: '2rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Yetkazib beruvchi</label>
+                        <select
+                            value={supplierId}
+                            onChange={(e) => setSupplierId(e.target.value)}
+                            style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                            required
+                        >
+                            <option value="">Tanlang...</option>
+                            {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Qabul qiluvchi filial</label>
+                        <select
+                            value={branchId}
+                            onChange={(e) => setBranchId(e.target.value)}
+                            style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                            required
+                        >
+                            <option value="">Tanlang...</option>
+                            {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                        </select>
+                    </div>
+                </div>
+
                 <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Yetkazib beruvchi</label>
-                    <select
-                        value={supplierId}
-                        onChange={(e) => setSupplierId(e.target.value)}
-                        style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
-                        required
-                    >
-                        <option value="">Tanlang...</option>
-                        {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </select>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Izoh / Hujjat ma'lumotlari</label>
+                    <textarea
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        placeholder="Masalan: Invoys #123, Shartnoma #45..."
+                        style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', minHeight: '80px', resize: 'vertical' }}
+                    />
                 </div>
 
                 <div style={{ marginBottom: '1.5rem' }}>

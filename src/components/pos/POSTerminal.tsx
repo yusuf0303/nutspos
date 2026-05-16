@@ -93,7 +93,7 @@ export default function POSTerminal({
         };
         checkShift();
     }, [user?.branchId]);
-    
+
     useEffect(() => {
         const bc = new BroadcastChannel('pos_settings_sync');
         bc.onmessage = (event) => {
@@ -165,7 +165,7 @@ export default function POSTerminal({
     const processBarcodeSearch = useCallback(() => {
         if (!search) return;
         // Priority 1: Exact SKU or Barcode match
-        const exactMatch = initialProducts.find(p => 
+        const exactMatch = initialProducts.find(p =>
             p.sku.toLowerCase() === search.toLowerCase() ||
             p.barcodes?.some((b: any) => b.code.toLowerCase() === search.toLowerCase())
         );
@@ -248,7 +248,7 @@ export default function POSTerminal({
             prev.map((item) => {
                 if (item.product.id !== productId) return item;
                 if (val === '') return { ...item, quantity: '' };
-                
+
                 if (strVal.includes('.') && isDiscreteUnit(item.product.unit)) return item;
 
                 const num = Number(val);
@@ -309,7 +309,7 @@ export default function POSTerminal({
             cardAmount = Number(splitCard) || 0;
             clickAmount = Number(splitClick) || 0;
             const splitTotal = cashAmount + cardAmount + clickAmount;
-            
+
             if (Math.abs(splitTotal - total) > 1) {
                 showToast("Xato: Aralash to'lov yig'indisi umumiy to'lovga teng emas!", "error");
                 return;
@@ -351,19 +351,19 @@ export default function POSTerminal({
         });
         setIsProcessing(false);
         if (result.success) {
-            setLastOrder({ 
+            setLastOrder({
                 id: result.order.id,
-                cart: [...cart], 
-                total, 
-                customerId, 
-                paymentType, 
-                cashAmount, 
-                cardAmount, 
-                clickAmount, 
-                globalDiscount, 
-                globalDiscountType, 
-                globalDiscountAmount, 
-                cashbackUsed: spentCashback 
+                cart: [...cart],
+                total,
+                customerId,
+                paymentType,
+                cashAmount,
+                cardAmount,
+                clickAmount,
+                globalDiscount,
+                globalDiscountType,
+                globalDiscountAmount,
+                cashbackUsed: spentCashback
             });
             setShowReceipt(true);
             showToast("Savdo muvaffaqiyatli yakunlandi!", "success");
@@ -442,11 +442,11 @@ export default function POSTerminal({
 
     const handleRefund = async (orderId: string) => {
         if (!confirm("Haqiqatan ham ushbu chekni vozvrat qilmoqchimisiz? Mahsulotlar omborga qaytadi.")) return;
-        
+
         setIsProcessing(true);
         const res = await refundOrder(orderId);
         setIsProcessing(false);
-        
+
         if (res.success) {
             showToast("Vozvrat muvaffaqiyatli amalga oshirildi", "success");
             setShowLookupModal(false);
@@ -519,6 +519,25 @@ export default function POSTerminal({
                 @keyframes slideInTop {
                     from { transform: translate(-50%, -20px); opacity: 0; }
                     to { transform: translate(-50%, 0); opacity: 1; }
+                }
+                @media print {
+                    @page { margin: 0; size: auto; }
+                    html, body { margin: 0; padding: 0; background: #fff !important; }
+                    nav, header, button, aside, .no-print { display: none !important; }
+                    #print-receipt {
+                        display: block !important;
+                        width: 100% !important;
+                        margin: 0 !important;
+                        padding: 20px 10px !important;
+                        border: none !important;
+                        box-shadow: none !important;
+                        visibility: visible !important;
+                        font-size: 14pt !important;
+                        color: #000 !important;
+                        background: #fff !important;
+                    }
+                    #print-receipt * { visibility: visible !important; }
+                    body * { visibility: hidden; }
                 }
             `}} />
             {/* =========================  CASHBACK MODAL  ========================= */}
@@ -631,12 +650,12 @@ export default function POSTerminal({
                             </p>
                         </div>
 
-                        <div id="print-receipt" style={{ background: '#fff', color: '#111', padding: '1.5rem', borderRadius: 'var(--radius-sm)', border: '1px dashed #ccc', fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                        <div id="print-receipt" style={{ background: '#fff', color: '#000', padding: '0.5rem', borderRadius: '0', border: 'none', fontFamily: "'Inter', sans-serif", fontSize: '0.9rem' }}>
                             <div style={{ textAlign: 'center', marginBottom: '0.75rem' }}>
-                                <h3 style={{ margin: '0 0 0.25rem' }}>NUTS POS</h3>
-                                <div style={{ fontSize: '0.75rem', color: '#666' }}>Savdo Cheki</div>
-                                <div style={{ fontSize: '0.75rem', color: '#666' }}>{new Date().toLocaleString('uz-UZ')}</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 'bold', marginTop: '0.25rem' }}>Chek ID: {lastOrder.id}</div>
+                                <h2 style={{ margin: '0 0 0.1rem', fontSize: '1.25rem', fontWeight: 800 }}>NUTS POS</h2>
+                                <div style={{ fontSize: '0.9rem', fontWeight: 700, textTransform: 'uppercase' }}>Savdo Cheki</div>
+                                <div style={{ fontSize: '0.8rem', color: '#333' }}>{new Date().toLocaleString('uz-UZ')}</div>
+                                <div style={{ fontSize: '0.85rem', fontWeight: 600, marginTop: '0.4rem' }}>№: {lastOrder.id.slice(-8).toUpperCase()}</div>
                             </div>
                             {selectedCustomer && (
                                 <div style={{ fontSize: '0.75rem', borderTop: '1px dashed #ccc', borderBottom: '1px dashed #ccc', padding: '0.5rem 0', margin: '0.5rem 0', color: '#444' }}>
@@ -650,9 +669,12 @@ export default function POSTerminal({
                                 const originalLineTotal = unitP * q;
                                 const discountAmt = item.discountType === 'PERCENT' ? originalLineTotal * (item.discount / 100) : item.discount;
                                 return (
-                                    <div key={item.product.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
-                                        <span>{item.product.name} x{q}{item.discount > 0 ? ` (-${item.discount}${item.discountType === 'PERCENT' ? '%' : " so'm"})` : ''}</span>
-                                        <span>{Math.max(0, originalLineTotal - discountAmt).toLocaleString()}</span>
+                                    <div key={item.product.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.95rem', borderBottom: '1px solid #f0f0f0', paddingBottom: '0.25rem' }}>
+                                        <div style={{ flex: 1, paddingRight: '0.4rem' }}>
+                                            <div style={{ fontWeight: 600 }}>{item.product.name}</div>
+                                            <div style={{ fontSize: '0.8rem', color: '#444' }}>{q} x {(item.customPrice ?? item.product.price).toLocaleString()}</div>
+                                        </div>
+                                        <div style={{ fontWeight: 700, fontSize: '1rem' }}>{Math.max(0, originalLineTotal - discountAmt).toLocaleString()}</div>
                                     </div>
                                 );
                             })}
@@ -668,19 +690,12 @@ export default function POSTerminal({
                                     <span>- {lastOrder.globalDiscountAmount.toLocaleString()}</span>
                                 </div>
                             )}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1rem', borderTop: '1px dashed #ccc', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
-                                <span>JAMI</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 900, fontSize: '1.25rem', borderTop: '2px solid #000', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
+                                <span>JAMI:</span>
                                 <span>{lastOrder.total.toLocaleString()} so'm</span>
                             </div>
-                            {lastOrder.paymentType === 'SPLIT' && (
-                                <div style={{ fontSize: '0.75rem', marginTop: '0.5rem', color: '#555', borderTop: '1px dashed #eee', paddingTop: '0.5rem' }}>
-                                    {lastOrder.cashAmount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Naqd:</span><span>{lastOrder.cashAmount.toLocaleString()}</span></div>}
-                                    {lastOrder.cardAmount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Karta:</span><span>{lastOrder.cardAmount.toLocaleString()}</span></div>}
-                                    {lastOrder.clickAmount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Click:</span><span>{lastOrder.clickAmount.toLocaleString()}</span></div>}
-                                </div>
-                            )}
-                            <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.75rem', color: '#888' }}>
-                                Xaridingiz uchun rahmat! 🙏
+                            <div style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.85rem', borderTop: '1px dashed #ccc', paddingTop: '1rem' }}>
+                                Xaridingiz uchun rahmat!
                             </div>
                         </div>
 
@@ -704,14 +719,14 @@ export default function POSTerminal({
                             <div onClick={() => { setEditMode('QUANTITY'); setIsNewInput(true); quantityInputRef.current?.focus(); }}
                                 style={{ flex: 1, padding: '0.75rem', borderRadius: 'var(--radius-md)', border: editMode === 'QUANTITY' ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)', background: editMode === 'QUANTITY' ? 'rgba(59,130,246,0.1)' : 'var(--bg-tertiary)', color: 'var(--text-primary)', cursor: 'text', textAlign: 'center', display: 'flex', flexDirection: 'column' }}>
                                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>Miqdor ({editingItem.product.unit})</div>
-                                <input 
+                                <input
                                     ref={quantityInputRef}
-                                    value={tempQuantity} 
+                                    value={tempQuantity}
                                     inputMode="none"
-                                    onChange={e => { 
+                                    onChange={e => {
                                         const val = e.target.value;
                                         if (isDiscreteUnit(editingItem?.product.unit) && val.includes('.')) return;
-                                        setTempQuantity(val); setIsNewInput(false); 
+                                        setTempQuantity(val); setIsNewInput(false);
                                     }}
                                     onFocus={() => { setEditMode('QUANTITY'); setIsNewInput(false); }}
                                     style={{ background: 'transparent', border: 'none', color: 'inherit', fontSize: '1.25rem', fontWeight: 700, textAlign: 'center', outline: 'none', width: '100%' }}
@@ -720,9 +735,9 @@ export default function POSTerminal({
                             <div onClick={() => { setEditMode('PRICE'); setIsNewInput(true); priceInputRef.current?.focus(); }}
                                 style={{ flex: 1, padding: '0.75rem', borderRadius: 'var(--radius-md)', border: editMode === 'PRICE' ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)', background: editMode === 'PRICE' ? 'rgba(59,130,246,0.1)' : 'var(--bg-tertiary)', color: 'var(--text-primary)', cursor: 'text', textAlign: 'center', display: 'flex', flexDirection: 'column' }}>
                                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>Sotish Narxi</div>
-                                <input 
+                                <input
                                     ref={priceInputRef}
-                                    value={tempPrice} 
+                                    value={tempPrice}
                                     inputMode="none"
                                     onChange={e => { setTempPrice(e.target.value); setIsNewInput(false); }}
                                     onFocus={() => { setEditMode('PRICE'); setIsNewInput(false); }}
@@ -735,15 +750,15 @@ export default function POSTerminal({
                                 <button key={key} onMouseDown={e => e.preventDefault()} onClick={() => {
                                     if (editMode === 'PRICE' && key === '.') return;
                                     if (editMode === 'QUANTITY' && key === '.' && editingItem && isDiscreteUnit(editingItem.product.unit)) return;
-                                    
+
                                     const ref = editMode === 'QUANTITY' ? quantityInputRef : priceInputRef;
                                     const input = ref.current;
                                     const setter = editMode === 'QUANTITY' ? setTempQuantity : setTempPrice;
-                                    
+
                                     setter(prev => {
                                         let nextVal = prev;
                                         let insertAt = prev.length;
-                                        
+
                                         if (input && input.selectionStart !== null) {
                                             insertAt = input.selectionStart;
                                         }
@@ -753,7 +768,7 @@ export default function POSTerminal({
                                             if (key === '.') nextVal = '0.';
                                             else if (key === '00' || key === '0') nextVal = '0';
                                             else nextVal = key;
-                                            
+
                                             setTimeout(() => {
                                                 input?.focus();
                                                 input?.setSelectionRange(nextVal.length, nextVal.length);
@@ -766,7 +781,7 @@ export default function POSTerminal({
                                             } else {
                                                 nextVal = prev.slice(0, insertAt) + key + prev.slice(input?.selectionEnd || insertAt);
                                             }
-                                            
+
                                             const newCursorPos = insertAt + key.length;
                                             setTimeout(() => {
                                                 input?.focus();
@@ -790,16 +805,16 @@ export default function POSTerminal({
                                 const ref = editMode === 'QUANTITY' ? quantityInputRef : priceInputRef;
                                 const input = ref.current;
                                 const setter = editMode === 'QUANTITY' ? setTempQuantity : setTempPrice;
-                                
+
                                 setter(prev => {
                                     if (!prev) return prev;
                                     let nextVal = prev;
                                     let newCursorPos = prev.length;
-                                    
+
                                     if (input && input.selectionStart !== null && input.selectionStart > 0) {
                                         const start = input.selectionStart;
                                         const end = input.selectionEnd || start;
-                                        
+
                                         if (start === end) {
                                             nextVal = prev.slice(0, start - 1) + prev.slice(end);
                                             newCursorPos = start - 1;
@@ -811,12 +826,12 @@ export default function POSTerminal({
                                         nextVal = prev.slice(0, -1);
                                         newCursorPos = nextVal.length;
                                     }
-                                    
+
                                     setTimeout(() => {
                                         input?.focus();
                                         input?.setSelectionRange(newCursorPos, newCursorPos);
                                     }, 0);
-                                    
+
                                     return nextVal;
                                 });
                             }} style={{ flex: 1, padding: '1rem', fontSize: '1rem', fontWeight: 600, background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', cursor: 'pointer' }}>⌫ O'chirish</button>
@@ -945,11 +960,11 @@ export default function POSTerminal({
                         </div>
                         <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', overflowY: 'auto' }}>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                <input 
-                                    type="text" 
-                                    value={lookupId} 
-                                    onChange={e => setLookupId(e.target.value)} 
-                                    placeholder="Chek ID sini kiriting (masalan: cm...)" 
+                                <input
+                                    type="text"
+                                    value={lookupId}
+                                    onChange={e => setLookupId(e.target.value)}
+                                    placeholder="Chek ID sini kiriting (masalan: cm...)"
                                     style={{ flex: 1, padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)', outline: 'none' }}
                                     onKeyDown={e => e.key === 'Enter' && handleLookup()}
                                 />
@@ -963,8 +978,8 @@ export default function POSTerminal({
                                     <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>Oxirgi urilgan cheklar:</h4>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto' }}>
                                         {recentOrders.map((ro: any) => (
-                                            <div 
-                                                key={ro.id} 
+                                            <div
+                                                key={ro.id}
                                                 onClick={() => setFoundOrder(ro)}
                                                 style={{ padding: '0.75rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.2s' }}
                                             >
@@ -988,8 +1003,8 @@ export default function POSTerminal({
                             )}
 
                             {foundOrder && (
-                                <button 
-                                    onClick={() => { setFoundOrder(null); setLookupId(''); handleLookup(); }} 
+                                <button
+                                    onClick={() => { setFoundOrder(null); setLookupId(''); handleLookup(); }}
                                     style={{ alignSelf: 'flex-start', background: 'transparent', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0' }}
                                 >
                                     ← Orqaga qaytish
@@ -1003,16 +1018,16 @@ export default function POSTerminal({
                                             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Sana: {new Date(foundOrder.createdAt).toLocaleString()}</div>
                                             <div style={{ fontWeight: 700 }}>Jami: {foundOrder.totalAmount.toLocaleString()} so'm</div>
                                             <div style={{ fontSize: '0.75rem', marginTop: '0.25rem', color: 'var(--accent-primary)', fontWeight: 600 }}>
-                                                {foundOrder.paymentType === 'CASH' ? '💵 Naqd pul' : 
-                                                 foundOrder.paymentType === 'CARD' ? '💳 Plastik karta' : 
-                                                 foundOrder.paymentType === 'CLICK' ? '📱 Click / Payme' : 
-                                                 '🔀 Aralash to\'lov'}
+                                                {foundOrder.paymentType === 'CASH' ? '💵 Naqd pul' :
+                                                    foundOrder.paymentType === 'CARD' ? '💳 Plastik karta' :
+                                                        foundOrder.paymentType === 'CLICK' ? '📱 Click / Payme' :
+                                                            '🔀 Aralash to\'lov'}
                                             </div>
                                         </div>
-                                        <div style={{ 
-                                            padding: '0.25rem 0.6rem', 
-                                            borderRadius: '999px', 
-                                            fontSize: '0.75rem', 
+                                        <div style={{
+                                            padding: '0.25rem 0.6rem',
+                                            borderRadius: '999px',
+                                            fontSize: '0.75rem',
                                             fontWeight: 700,
                                             background: foundOrder.status === 'COMPLETED' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
                                             color: foundOrder.status === 'COMPLETED' ? 'var(--success)' : 'var(--danger)'
@@ -1030,7 +1045,7 @@ export default function POSTerminal({
                                     </div>
                                     {foundOrder.status === 'COMPLETED' && (
                                         <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.05)', borderTop: '1px solid var(--border-color)' }}>
-                                            <button 
+                                            <button
                                                 onClick={() => handleRefund(foundOrder.id)}
                                                 disabled={isProcessing}
                                                 style={{ width: '100%', padding: '0.75rem', background: 'var(--danger)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', fontWeight: 700, cursor: 'pointer' }}
@@ -1062,7 +1077,7 @@ export default function POSTerminal({
                             style={{ flex: 1, padding: '0.6rem 2.2rem 0.6rem 2.2rem', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)', outline: 'none', fontSize: '0.875rem' }}
                         />
                         {search && (
-                            <button 
+                            <button
                                 onClick={() => { setSearch(''); searchRef.current?.focus(); }}
                                 style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             >
@@ -1282,7 +1297,7 @@ export default function POSTerminal({
                         </div>
                     )}
                     <div>
-                        <div 
+                        <div
                             onClick={() => setShowPaymentTypes(!showPaymentTypes)}
                             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: '0.4rem', padding: '0.2rem 0' }}
                         >
@@ -1294,7 +1309,7 @@ export default function POSTerminal({
                             </div>
                             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{showPaymentTypes ? '▲' : '▼'}</span>
                         </div>
-                        
+
                         {showPaymentTypes && (
                             <>
                                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -1328,66 +1343,66 @@ export default function POSTerminal({
                                             <input ref={splitClickRef} type="text" inputMode="none" placeholder="0" className="no-spinners" value={splitClick} onFocus={() => setActiveSplitInput('CLICK')} onBlur={() => setActiveSplitInput(null)} onChange={e => setSplitClick(e.target.value)} style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-sm)', border: activeSplitInput === 'CLICK' ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
                                         </div>
 
-                                {activeSplitInput && (
-                                    <div style={{ marginTop: '0.25rem', background: 'var(--bg-secondary)', padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', animation: 'fadeIn 0.2s' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                            <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 600 }}>Numpad ({activeSplitInput === 'CASH' ? 'Naqd' : activeSplitInput === 'CARD' ? 'Karta' : 'Click'})</span>
-                                            <button onClick={() => setActiveSplitInput(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem' }}>✕ Yopish</button>
-                                        </div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.25rem' }}>
-                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, '00', 0, '⌫'].map((n) => (
-                                                <button key={n} onMouseDown={(e) => {
-                                                    e.preventDefault(); // Prevents input from losing focus
-                                                    const setter = activeSplitInput === 'CASH' ? setSplitCash : activeSplitInput === 'CARD' ? setSplitCard : setSplitClick;
-                                                    const ref = activeSplitInput === 'CASH' ? splitCashRef : activeSplitInput === 'CARD' ? splitCardRef : splitClickRef;
-                                                    
-                                                    const currentEl = ref.current;
-                                                    if (currentEl) {
-                                                        const start = currentEl.selectionStart || 0;
-                                                        const end = currentEl.selectionEnd || 0;
-                                                        const currentVal = currentEl.value;
+                                        {activeSplitInput && (
+                                            <div style={{ marginTop: '0.25rem', background: 'var(--bg-secondary)', padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', animation: 'fadeIn 0.2s' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                                    <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 600 }}>Numpad ({activeSplitInput === 'CASH' ? 'Naqd' : activeSplitInput === 'CARD' ? 'Karta' : 'Click'})</span>
+                                                    <button onClick={() => setActiveSplitInput(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem' }}>✕ Yopish</button>
+                                                </div>
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.25rem' }}>
+                                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, '00', 0, '⌫'].map((n) => (
+                                                        <button key={n} onMouseDown={(e) => {
+                                                            e.preventDefault(); // Prevents input from losing focus
+                                                            const setter = activeSplitInput === 'CASH' ? setSplitCash : activeSplitInput === 'CARD' ? setSplitCard : setSplitClick;
+                                                            const ref = activeSplitInput === 'CASH' ? splitCashRef : activeSplitInput === 'CARD' ? splitCardRef : splitClickRef;
 
-                                                        let newValue = currentVal;
-                                                        let newCursorPos = start;
+                                                            const currentEl = ref.current;
+                                                            if (currentEl) {
+                                                                const start = currentEl.selectionStart || 0;
+                                                                const end = currentEl.selectionEnd || 0;
+                                                                const currentVal = currentEl.value;
 
-                                                        if (n === '⌫') {
-                                                            if (start === end) {
-                                                                if (start > 0) {
-                                                                    newValue = currentVal.slice(0, start - 1) + currentVal.slice(end);
-                                                                    newCursorPos = start - 1;
+                                                                let newValue = currentVal;
+                                                                let newCursorPos = start;
+
+                                                                if (n === '⌫') {
+                                                                    if (start === end) {
+                                                                        if (start > 0) {
+                                                                            newValue = currentVal.slice(0, start - 1) + currentVal.slice(end);
+                                                                            newCursorPos = start - 1;
+                                                                        }
+                                                                    } else {
+                                                                        newValue = currentVal.slice(0, start) + currentVal.slice(end);
+                                                                        newCursorPos = start;
+                                                                    }
+                                                                } else {
+                                                                    newValue = currentVal.slice(0, start) + n.toString() + currentVal.slice(end);
+                                                                    newCursorPos = start + n.toString().length;
                                                                 }
-                                                            } else {
-                                                                newValue = currentVal.slice(0, start) + currentVal.slice(end);
-                                                                newCursorPos = start;
-                                                            }
-                                                        } else {
-                                                            newValue = currentVal.slice(0, start) + n.toString() + currentVal.slice(end);
-                                                            newCursorPos = start + n.toString().length;
-                                                        }
 
-                                                        setter(newValue);
-                                                        setTimeout(() => {
-                                                            if (ref.current) {
-                                                                ref.current.setSelectionRange(newCursorPos, newCursorPos);
+                                                                setter(newValue);
+                                                                setTimeout(() => {
+                                                                    if (ref.current) {
+                                                                        ref.current.setSelectionRange(newCursorPos, newCursorPos);
+                                                                    }
+                                                                }, 0);
                                                             }
-                                                        }, 0);
-                                                    }
-                                                }} style={{ padding: '0.5rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', color: 'var(--text-primary)' }}>
-                                                    {n}
-                                                </button>
-                                            ))}
+                                                        }} style={{ padding: '0.5rem', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', color: 'var(--text-primary)' }}>
+                                                            {n}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600, color: (Number(splitCash) || 0) + (Number(splitCard) || 0) + (Number(splitClick) || 0) === total ? 'var(--success)' : 'var(--danger)', marginTop: '0.2rem' }}>
+                                            <span>Kiritilgan jami:</span>
+                                            <span>{((Number(splitCash) || 0) + (Number(splitCard) || 0) + (Number(splitClick) || 0)).toLocaleString()} so'm</span>
                                         </div>
                                     </div>
                                 )}
-
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600, color: (Number(splitCash) || 0) + (Number(splitCard) || 0) + (Number(splitClick) || 0) === total ? 'var(--success)' : 'var(--danger)', marginTop: '0.2rem' }}>
-                                    <span>Kiritilgan jami:</span>
-                                    <span>{((Number(splitCash) || 0) + (Number(splitCard) || 0) + (Number(splitClick) || 0)).toLocaleString()} so'm</span>
-                                </div>
-                            </div>
+                            </>
                         )}
-                        </>
-                    )}
                     </div>
                 </div>
 

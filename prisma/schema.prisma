@@ -45,6 +45,7 @@ model Branch {
   adjustments InventoryAdjustment[]
   transfersFrom StockTransfer[] @relation("SourceBranch")
   transfersTo   StockTransfer[] @relation("DestBranch")
+  purchases     PurchaseOrder[]
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 }
@@ -212,16 +213,20 @@ model OrderItem {
 }
 
 model PurchaseOrder {
-  id          String   @id @default(cuid())
-  userId      String   // Created by
-  user        User     @relation(fields: [userId], references: [id])
-  supplierId  String
-  supplier    Supplier @relation(fields: [supplierId], references: [id])
-  totalAmount Float
-  status      String   @default("PENDING") // PENDING, RECEIVED, CANCELLED
-  items       PurchaseOrderItem[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(cuid())
+  documentNumber  String   @unique
+  userId          String   // Created by
+  user            User     @relation(fields: [userId], references: [id])
+  supplierId      String
+  supplier        Supplier @relation(fields: [supplierId], references: [id])
+  branchId        String
+  branch          Branch   @relation(fields: [branchId], references: [id])
+  totalAmount     Float
+  status          String   @default("PENDING") // PENDING, RECEIVED, CANCELLED
+  note            String?
+  items           PurchaseOrderItem[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model PurchaseOrderItem {
