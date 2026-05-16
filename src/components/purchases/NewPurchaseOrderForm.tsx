@@ -5,6 +5,103 @@ import { createPurchaseOrder } from '@/app/actions/purchaseActions';
 import { useToast } from '@/context/ToastContext';
 import { useRouter } from 'next/navigation';
 
+function SearchableProductSelect({ products, value, onChange }: { products: any[], value: string, onChange: (id: string) => void }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [search, setSearch] = useState('');
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const selectedProduct = products.find(p => p.id === value);
+    const filteredProducts = products.filter(p => 
+        p.name.toLowerCase().includes(search.toLowerCase()) || 
+        p.sku.toLowerCase().includes(search.toLowerCase())
+    ).slice(0, 50);
+
+    return (
+        <div ref={dropdownRef} style={{ position: 'relative', width: '100%' }}>
+            <div 
+                onClick={() => setIsOpen(!isOpen)}
+                style={{ 
+                    padding: '0.5rem', 
+                    borderRadius: '4px', 
+                    background: 'var(--bg-secondary)', 
+                    border: '1px solid var(--border-color)', 
+                    color: value ? 'var(--text-primary)' : 'var(--text-muted)',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    minHeight: '38px'
+                }}
+            >
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: '0.5rem' }}>
+                    {selectedProduct ? `${selectedProduct.name} (${selectedProduct.sku})` : "Tanlang..."}
+                </span>
+                <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>{isOpen ? '▲' : '▼'}</span>
+            </div>
+
+            {isOpen && (
+                <div style={{ 
+                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, 
+                    marginTop: '4px', background: 'var(--bg-secondary)', 
+                    border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)',
+                    boxShadow: 'var(--shadow-lg)', overflow: 'hidden',
+                    animation: 'fadeIn 0.2s ease-out'
+                }}>
+                    <input 
+                        autoFocus
+                        placeholder="Qidirish..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        style={{ 
+                            width: '100%', padding: '0.6rem', border: 'none', 
+                            borderBottom: '1px solid var(--border-color)', 
+                            background: 'var(--bg-tertiary)', color: 'var(--text-primary)',
+                            outline: 'none', fontSize: '0.875rem'
+                        }}
+                    />
+                    <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                        {filteredProducts.length === 0 ? (
+                            <div style={{ padding: '1rem', color: 'var(--text-muted)', textAlign: 'center', fontSize: '0.875rem' }}>Topilmadi</div>
+                        ) : (
+                            filteredProducts.map(p => (
+                                <div 
+                                    key={p.id}
+                                    onClick={() => {
+                                        onChange(p.id);
+                                        setIsOpen(false);
+                                        setSearch('');
+                                    }}
+                                    className="table-row-hover"
+                                    style={{ 
+                                        padding: '0.6rem 0.75rem', cursor: 'pointer', 
+                                        fontSize: '0.875rem', borderBottom: '1px solid var(--border-color)'
+                                    }}
+                                >
+                                    <div style={{ fontWeight: 600 }}>{p.name}</div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>SKU: {p.sku}</div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+import { useEffect, useRef } from 'react';
+
 export default function NewPurchaseOrderForm({ suppliers, products, branches, user }: { suppliers: any[], products: any[], branches: any[], user: any }) {
     const { showToast } = useToast();
     const [supplierId, setSupplierId] = useState('');
@@ -128,13 +225,13 @@ export default function NewPurchaseOrderForm({ suppliers, products, branches, us
                             const markupPercent = itemCost > 0 ? ((itemPrice - itemCost) / itemCost * 100).toFixed(1) : 0;
 
                             return (
-                            <div key={index} style={{ display: 'grid', gridTemplateColumns: '2fr 0.8fr 1fr 1fr 0.8fr 1fr 1fr 1fr auto', gap: '1rem', alignItems: 'end', padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
-                                <div>
+                            <div key={index} style={{ display: 'grid', gridTemplateColumns: '1.5fr 0.6fr 0.8fr 0.8fr 0.6fr 0.8fr 0.8fr 0.8fr auto', gap: '0.75rem', alignItems: 'end', padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                                <div style={{ minWidth: 0 }}>
                                     <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', color: 'var(--text-muted)' }}>Mahsulot</label>
-                                    <select
+                                    <SearchableProductSelect 
+                                        products={products}
                                         value={item.productId}
-                                        onChange={(e) => {
-                                            const pid = e.target.value;
+                                        onChange={(pid) => {
                                             const selectedProduct = products.find(p => p.id === pid);
                                             const newItems = [...items];
                                             newItems[index].productId = pid;
@@ -143,12 +240,7 @@ export default function NewPurchaseOrderForm({ suppliers, products, branches, us
                                             }
                                             setItems(newItems);
                                         }}
-                                        style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
-                                        required
-                                    >
-                                        <option value="">Tanlang...</option>
-                                        {products.map(p => <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>)}
-                                    </select>
+                                    />
                                 </div>
                                 <div>
                                     <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', color: 'var(--text-muted)' }}>Soni</label>
