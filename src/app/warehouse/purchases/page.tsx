@@ -4,7 +4,7 @@ import ReceivePOButton from '@/components/purchases/ReceivePOButton';
 
 export default async function PurchaseOrdersPage() {
     const purchases = await prisma.purchaseOrder.findMany({
-        include: { supplier: true, user: true, items: true },
+        include: { supplier: true, user: true, items: true, branch: true },
         orderBy: { createdAt: 'desc' }
     });
 
@@ -22,8 +22,9 @@ export default async function PurchaseOrdersPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>
                         <tr>
-                            <th style={{ padding: '1rem', fontWeight: 600 }}>Buyurtma #</th>
+                            <th style={{ padding: '1rem', fontWeight: 600 }}>Hujjat #</th>
                             <th style={{ padding: '1rem', fontWeight: 600 }}>Yetkazib beruvchi</th>
+                            <th style={{ padding: '1rem', fontWeight: 600 }}>Filial</th>
                             <th style={{ padding: '1rem', fontWeight: 600 }}>Sana</th>
                             <th style={{ padding: '1rem', fontWeight: 600 }}>Status</th>
                             <th style={{ padding: '1rem', fontWeight: 600 }}>Jami</th>
@@ -33,15 +34,18 @@ export default async function PurchaseOrdersPage() {
                     <tbody>
                         {purchases.length === 0 ? (
                             <tr>
-                                <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                <td colSpan={7} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                                     Hali ta'minot buyurtmalari mavjud emas.
                                 </td>
                             </tr>
                         ) : (
                             purchases.map((po: any) => (
                                 <tr key={po.id} className="table-row-hover" style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                    <td style={{ padding: '1rem', fontWeight: 600 }}>{po.id.slice(-6).toUpperCase()}</td>
+                                    <td style={{ padding: '1rem', fontWeight: 600 }}>{po.documentNumber || po.id.slice(-6).toUpperCase()}</td>
                                     <td style={{ padding: '1rem' }}>{po.supplier.name}</td>
+                                    <td style={{ padding: '1rem' }}>
+                                        <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>{po.branch?.name || '---'}</div>
+                                    </td>
                                     <td style={{ padding: '1rem', fontSize: '0.875rem' }}>{po.createdAt.toLocaleDateString()}</td>
                                     <td style={{ padding: '1rem' }}>
                                         <span style={{
@@ -54,11 +58,11 @@ export default async function PurchaseOrdersPage() {
                                         </span>
                                     </td>
                                     <td style={{ padding: '1rem', fontWeight: 700 }}>{po.totalAmount.toLocaleString()} so'm</td>
-                                    <td style={{ padding: '1rem', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                                    <td style={{ padding: '1rem', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', alignItems: 'center' }}>
                                         <ReceivePOButton poId={po.id} status={po.status} />
-                                        <button className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8125rem' }}>
+                                        <Link href={`/warehouse/purchases/${po.id}`} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8125rem' }}>
                                             Batafsil
-                                        </button>
+                                        </Link>
                                     </td>
                                 </tr>
                             ))

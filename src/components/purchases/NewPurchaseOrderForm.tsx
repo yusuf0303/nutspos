@@ -5,7 +5,7 @@ import { createPurchaseOrder } from '@/app/actions/purchaseActions';
 import { useToast } from '@/context/ToastContext';
 import { useRouter } from 'next/navigation';
 
-export default function NewPurchaseOrderForm({ suppliers, products, branches }: { suppliers: any[], products: any[], branches: any[] }) {
+export default function NewPurchaseOrderForm({ suppliers, products, branches, user }: { suppliers: any[], products: any[], branches: any[], user: any }) {
     const { showToast } = useToast();
     const [supplierId, setSupplierId] = useState('');
     const [branchId, setBranchId] = useState('');
@@ -48,7 +48,7 @@ export default function NewPurchaseOrderForm({ suppliers, products, branches }: 
                 supplierId,
                 branchId,
                 note,
-                userId: 'clw1234567890', // Placeholder
+                userId: user.id,
                 items: formattedItems
             });
             setLoading(false);
