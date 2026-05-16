@@ -374,7 +374,7 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.sku}</div>
                                     </div>
                                     <div style={{ padding: '0.25rem 0.5rem', background: 'var(--bg-tertiary)', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700 }}>
-                                        {p.totalSold} {p.unit || 'dona'}
+                                        {Number(p.totalSold.toFixed(3))} {p.unit || 'dona'}
                                     </div>
                                 </div>
                             ))
@@ -397,7 +397,7 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div style={{ flex: 1 }}>
                                         <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{inv.product.name}</div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Qoldiq: {inv.quantity} {inv.product.unit || 'dona'}</div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Qoldiq: {Number(inv.quantity.toFixed(3))} {inv.product.unit || 'dona'}</div>
                                     </div>
                                     <div style={{ fontSize: '0.75rem', color: 'var(--warning)', fontWeight: 600 }}>
                                         {(inv.product.cost * inv.quantity).toLocaleString()} so'm
@@ -616,7 +616,7 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                                             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)' }}>
                                                 <div>
                                                     <div style={{ fontWeight: 600 }}>{item.name}</div>
-                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Qoldiq: {item.qty} dona</div>
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Qoldiq: {Number(item.qty.toFixed(3))} dona</div>
                                                 </div>
                                                 <span style={{ fontWeight: 700 }}>{item.value.toLocaleString()} so'm</span>
                                             </div>
@@ -641,7 +641,7 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                                                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.sku}</div>
                                             </div>
                                             <div style={{ padding: '0.25rem 0.75rem', background: 'var(--bg-tertiary)', borderRadius: '4px', fontSize: '0.875rem', fontWeight: 700 }}>
-                                                {p.totalSold} {p.unit || 'dona'}
+                                                {Number(p.totalSold.toFixed(3))} {p.unit || 'dona'}
                                             </div>
                                         </div>
                                     ))}
@@ -658,7 +658,7 @@ export default async function WarehouseDashboard({ searchParams }: { searchParam
                                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)' }}>
                                             <div style={{ flex: 1 }}>
                                                 <div style={{ fontWeight: 600 }}>{inv.product.name}</div>
-                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>SKU: {inv.product.sku} | Qoldiq: {inv.quantity} {inv.product.unit || 'dona'}</div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>SKU: {inv.product.sku} | Qoldiq: {Number(inv.quantity.toFixed(3))} {inv.product.unit || 'dona'}</div>
                                             </div>
                                             <div style={{ fontWeight: 700, color: 'var(--warning)' }}>
                                                 {(inv.product.cost * inv.quantity).toLocaleString()} so'm

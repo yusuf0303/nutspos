@@ -110,7 +110,7 @@ export default function InventoryList({ summary, branches, pendingAdjustments, c
                                     </td>
                                     <td style={{ padding: '1rem', textAlign: 'center' }}>
                                         <div style={{ fontWeight: 700, fontSize: '1.125rem', color: item.totalStock < 10 ? 'var(--warning)' : 'var(--success)' }}>
-                                            {item.totalStock} {item.unit}
+                                            {Number(item.totalStock.toFixed(3))} {item.unit}
                                         </div>
                                     </td>
                                     {branches.map(b => {
@@ -122,7 +122,7 @@ export default function InventoryList({ summary, branches, pendingAdjustments, c
                                                     color: bStock === 0 ? 'var(--text-muted)' : 'var(--text-primary)',
                                                     opacity: bStock === 0 ? 0.5 : 1
                                                 }}>
-                                                    {bStock}
+                                                    {Number(bStock.toFixed(3))}
                                                 </div>
                                             </td>
                                         );

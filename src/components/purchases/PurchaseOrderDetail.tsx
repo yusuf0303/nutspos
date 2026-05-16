@@ -77,7 +77,7 @@ export default function PurchaseOrderDetail({ po }: { po: any }) {
                             <tr key={item.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                                 <td style={{ padding: '1rem', fontWeight: 500 }}>{item.product.name}</td>
                                 <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>{item.product.sku}</td>
-                                <td style={{ padding: '1rem', textAlign: 'right' }}>{item.quantity} {item.product.unit}</td>
+                                <td style={{ padding: '1rem', textAlign: 'right' }}>{Number(item.quantity.toFixed(3))} {item.product.unit}</td>
                                 <td style={{ padding: '1rem', textAlign: 'right' }}>{item.cost.toLocaleString()} so'm</td>
                                 <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 600 }}>{(item.quantity * item.cost).toLocaleString()} so'm</td>
                             </tr>

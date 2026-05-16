@@ -202,7 +202,7 @@ export default async function ProductsPage({
                                                 }}>
                                                     {statusText}
                                                 </span>
-                                                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{stock} {product.unit || 'dona'}</span>
+                                                <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{Number(stock.toFixed(3))} {product.unit || 'dona'}</span>
                                             </div>
                                         </td>
                                         <td style={{ padding: '1rem' }}>

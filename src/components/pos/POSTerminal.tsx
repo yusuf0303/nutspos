@@ -1238,7 +1238,7 @@ export default function POSTerminal({
                                             background: outOfStock ? 'rgba(239,68,68,0.1)' : stock <= 5 ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)',
                                             color: outOfStock ? 'var(--danger)' : stock <= 5 ? 'var(--warning)' : 'var(--success)'
                                         }}>
-                                            {outOfStock ? 'Tugagan' : stock <= 5 ? `⚠ ${stock} ${product.unit || 'dona'}` : `✓ ${stock} ${product.unit || 'dona'}`}
+                                            {outOfStock ? 'Tugagan' : stock <= 5 ? `⚠ ${Number(stock.toFixed(3))} ${product.unit || 'dona'}` : `✓ ${Number(stock.toFixed(3))} ${product.unit || 'dona'}`}
                                         </span>
                                     </div>
                                     {product.category && (
