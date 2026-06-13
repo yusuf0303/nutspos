@@ -19,7 +19,8 @@
 
 # production
 /build
-
+/dist-electron/
+add-user.js
 # misc
 .DS_Store
 *.pem

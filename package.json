@@ -1,13 +1,18 @@
 {
   "name": "pos-warehouse",
   "version": "0.1.0",
+  "author": "Nuts POS",
+  "description": "Nuts POS & Warehouse application",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "prisma:seed": "prisma db seed"
+    "prisma:seed": "prisma db seed",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://127.0.0.1:3000 && electron .\"",
+    "build:electron": "npm run build && node copy-standalone.js && electron-builder"
   },
   "dependencies": {
     "@prisma/client": "^6.2.0",
@@ -23,13 +28,51 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^10.0.3",
+    "electron": "^42.3.2",
+    "electron-builder": "^26.8.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "prisma": "^6.2.0",
     "tsx": "^4.7.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^9.0.10"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
+  },
+  "build": {
+    "appId": "com.nutspos.app",
+    "productName": "Nuts POS & Warehouse",
+    "executableName": "NutsPOS",
+    "copyright": "Copyright © 2024 Nuts POS",
+    "forceCodeSigning": false,
+    "directories": {
+      "output": "dist-electron"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Nuts POS & Warehouse"
+    },
+    "files": [
+      "electron/**/*",
+      ".next/standalone/**/*",
+      "prisma/schema.prisma",
+      "prisma/dev.db",
+      "package.json",
+      "!node_modules/**/*"
+    ],
+    "asar": false
   }
 }

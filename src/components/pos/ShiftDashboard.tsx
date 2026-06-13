@@ -6,7 +6,7 @@ import { useToast } from '@/context/ToastContext';
 import { openShift, closeShift, getCurrentShift, getShiftStats } from '@/app/actions/shiftActions';
 import Link from 'next/link';
 import { logoutAction } from '@/app/actions/authActions';
-
+import { syncWithServer } from '@/app/actions/syncActions';
 export default function ShiftDashboard({ user }: { user: any }) {
     const router = useRouter();
     const { showToast } = useToast();
@@ -14,6 +14,19 @@ export default function ShiftDashboard({ user }: { user: any }) {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
+
+    const handleSync = async () => {
+        setIsSyncing(true);
+        const res = await syncWithServer();
+        if (res.success) {
+            showToast(res.message || "Sinxronlash yakunlandi", "success");
+            fetchShiftData();
+        } else {
+            showToast(res.error || "Xatolik yuz berdi", "error");
+        }
+        setIsSyncing(false);
+    };
 
     // Modals
     const [showOpenModal, setShowOpenModal] = useState(false);
@@ -104,14 +117,15 @@ export default function ShiftDashboard({ user }: { user: any }) {
                             {user.branch?.name || 'Filial biriktirilmagan'} • {new Date().toLocaleDateString('uz-UZ')}
                         </p>
                     </div>
-                    <form action={logoutAction}>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                         <button
-                            type="submit"
+                            onClick={handleSync}
+                            disabled={isSyncing}
                             style={{
                                 padding: '0.6rem 1.2rem',
-                                background: 'rgba(239, 68, 68, 0.1)',
-                                color: 'var(--danger)',
-                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                background: 'rgba(59, 130, 246, 0.1)',
+                                color: 'var(--accent-primary)',
+                                border: '1px solid rgba(59, 130, 246, 0.2)',
                                 borderRadius: 'var(--radius-md)',
                                 fontWeight: 600,
                                 cursor: 'pointer',
@@ -120,9 +134,28 @@ export default function ShiftDashboard({ user }: { user: any }) {
                                 gap: '0.5rem'
                             }}
                         >
-                            🚪 Chiqish
+                            {isSyncing ? "⏳ Sinxronlanmoqda..." : "🔄 Sinxronlash"}
                         </button>
-                    </form>
+                        <form action={logoutAction}>
+                            <button
+                                type="submit"
+                                style={{
+                                    padding: '0.6rem 1.2rem',
+                                    background: 'rgba(239, 68, 68, 0.1)',
+                                    color: 'var(--danger)',
+                                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                                    borderRadius: 'var(--radius-md)',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem'
+                                }}
+                            >
+                                🚪 Chiqish
+                            </button>
+                        </form>
+                    </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem' }}>
