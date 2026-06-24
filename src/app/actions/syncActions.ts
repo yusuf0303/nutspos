@@ -44,7 +44,14 @@ export async function syncWithServer() {
             }
             // Barcodes
             for (const item of barcodes) {
-                await prisma.barcode.upsert({ where: { id: item.id }, create: item, update: item });
+                try {
+                    const productExists = await prisma.product.findUnique({ where: { id: item.productId } });
+                    if (productExists) {
+                        await prisma.barcode.upsert({ where: { id: item.id }, create: item, update: item });
+                    }
+                } catch (e) {
+                    console.error('Barcode sync skip error:', e);
+                }
             }
 
             await updateSetting('LAST_SYNC_PULL_TIME', new Date().toISOString());

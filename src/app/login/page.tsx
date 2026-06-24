@@ -1,8 +1,8 @@
 'use client';
 
-import { useActionState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { loginAction } from '@/app/actions/authActions';
+import { signIn } from 'next-auth/react';
 import { useToast } from '@/context/ToastContext';
 
 export default function LoginPage() {
@@ -14,17 +14,39 @@ export default function LoginPage() {
 }
 
 function LoginForm() {
-    const [state, formAction, isPending] = useActionState(loginAction, null);
+    const [isPending, setIsPending] = useState(false);
     const { showToast } = useToast();
-
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get('callbackUrl') || '/pos';
 
-    useEffect(() => {
-        if (state?.error) {
-            showToast(state.error, 'error');
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setIsPending(true);
+
+        const formData = new FormData(e.currentTarget);
+        const email = formData.get('email') as string;
+        const password = formData.get('password') as string;
+
+        try {
+            // next-auth/react orqali client-side login (Server Action ishlatmasdan)
+            const result = await signIn('credentials', {
+                email,
+                password,
+                redirect: false,
+            });
+
+            if (result?.error) {
+                showToast('Elektron pochta yoki parol noto\'g\'ri.', 'error');
+            } else {
+                // Login muvaffaqiyatli bo'lsa yo'naltirish
+                window.location.href = redirectTo;
+            }
+        } catch (error) {
+            showToast('Tizimga kirishda xatolik yuz berdi.', 'error');
+        } finally {
+            setIsPending(false);
         }
-    }, [state, showToast]);
+    };
 
     return (
         <div style={{
@@ -42,7 +64,7 @@ function LoginForm() {
                 </div>
 
                 <form
-                    action={formAction}
+                    onSubmit={handleSubmit}
                     style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
                 >
                     <input type="hidden" name="redirectTo" value={redirectTo} />

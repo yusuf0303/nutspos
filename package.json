@@ -71,7 +71,8 @@
       "prisma/schema.prisma",
       "prisma/dev.db",
       "package.json",
-      "!node_modules/**/*"
+      "!node_modules",
+      ".next/standalone/node_modules/**/*"
     ],
     "asar": false
   }

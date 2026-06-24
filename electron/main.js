@@ -5,6 +5,16 @@ const http = require('http');
 const net = require('net');
 const { spawn } = require('child_process');
 
+// Log fayli yozuvchi
+function getLogPath() {
+  return path.join(app.getPath('userData'), 'app.log');
+}
+function log(...args) {
+  const msg = `[${new Date().toISOString()}] ${args.join(' ')}\n`;
+  process.stdout.write(msg);
+  try { fs.appendFileSync(getLogPath(), msg); } catch(e) {}
+}
+
 let mainWindow;
 let nextProcess = null;
 const isDev = !app.isPackaged;
@@ -89,7 +99,7 @@ function waitForServer(port, timeoutMs = 20000) {
 function startNextServer(port) {
   return new Promise((resolve, reject) => {
     if (isDev) {
-      console.log('Dev mode: Next.js dev server is assumed to be running on port 3000.');
+      log('Dev mode: Next.js dev server is assumed to be running on port 3000.');
       resolve();
       return;
     }
@@ -97,30 +107,48 @@ function startNextServer(port) {
     const appPath = app.getAppPath();
     const serverScript = path.join(appPath, '.next', 'standalone', 'server.js');
 
+    log('Server script path:', serverScript);
+    log('Server script exists:', fs.existsSync(serverScript));
+    log('DATABASE_URL:', process.env.DATABASE_URL);
+
+    // Standalone node.js o'rniga Electron ni o'zidan Node sifatida foydalanamiz
+    const nodeBin = process.execPath;
+
     // Setup environments
     const env = {
       ...process.env,
+      ELECTRON_RUN_AS_NODE: '1', // Electron ni Node.js backend sifatida ishlatish uchun
       PORT: port.toString(),
       NODE_ENV: 'production',
+      DATABASE_URL: process.env.DATABASE_URL, // main.js setupDatabase() tomonidan o'rnatilgan
       AUTH_SECRET: process.env.AUTH_SECRET || 'my-super-secret-auth-key-12345',
-      AUTH_URL: `http://127.0.0.1:${port}`,
-      NEXTAUTH_URL: `http://127.0.0.1:${port}`,
-      ELECTRON_RUN_AS_NODE: '1',
+      AUTH_URL: `http://127.0.0.1:${port}/api/auth`, // next-auth uchun to'g'ri URL
+      NEXTAUTH_URL: `http://127.0.0.1:${port}`, // next-auth v4 va server actions uchun
     };
 
-    console.log('Spawning Next.js process using Electron internal Node:', serverScript);
-    nextProcess = spawn(process.execPath, [serverScript], { env, cwd: appPath });
+    log('Spawning Next.js with node:', nodeBin);
+    // process.execPath (Electron) emas, balki oddiy node binary ishlatamiz
+    nextProcess = spawn(nodeBin, [serverScript], {
+      env,
+      cwd: path.join(appPath, '.next', 'standalone'),
+      shell: false,
+    });
 
     nextProcess.stdout.on('data', (data) => {
-      console.log(`[Next.js Server]: ${data.toString().trim()}`);
+      log(`[Next.js]: ${data.toString().trim()}`);
     });
 
     nextProcess.stderr.on('data', (data) => {
-      console.error(`[Next.js Server Error]: ${data.toString().trim()}`);
+      log(`[Next.js ERR]: ${data.toString().trim()}`);
     });
 
     nextProcess.on('close', (code) => {
-      console.log(`Next.js process exited with code ${code}`);
+      log(`Next.js process exited with code ${code}`);
+    });
+
+    nextProcess.on('error', (err) => {
+      log('Failed to start Next.js:', err.message);
+      reject(err);
     });
 
     // Wait for Next.js to start serving pages
@@ -150,6 +178,7 @@ function createWindow(port) {
 
   // Hide the default electron menu bar
   mainWindow.setMenuBarVisibility(false);
+  mainWindow.webContents.session.clearCache().then(() => console.log('Cache cleared'));
 
   const url = isDev ? 'http://localhost:3000' : `http://127.0.0.1:${port}`;
   mainWindow.loadURL(url);
@@ -162,15 +191,20 @@ function createWindow(port) {
 // 6. Electron Application Lifecycle
 app.whenReady().then(async () => {
   setupDatabase();
+  log('App ready. userData:', app.getPath('userData'));
+  log('App path:', app.getAppPath());
   const port = isDev ? 3000 : await findFreePort(3000);
+  log('Using port:', port);
 
   try {
     await startNextServer(port);
+    log('Next.js server started successfully on port', port);
     createWindow(port);
   } catch (error) {
+    log('ERROR starting server:', error.message);
     dialog.showErrorBox(
       'Serverni ishga tushirib bo\'lmadi',
-      `Tizim serverini ishga tushirishda xatolik yuz berdi: ${error.message}`
+      `Xatolik: ${error.message}\n\nLog fayl: ${getLogPath()}`
     );
     app.quit();
   }
