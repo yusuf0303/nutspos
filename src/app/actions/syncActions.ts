@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { getSetting, updateSetting } from './settingActions';
+import { resolveUserConflict, resolveProductConflict, resolveBarcodeConflict } from '@/lib/syncConflictResolver';
 
 const DEFAULT_SYNC_URL = process.env.SYNC_SERVER_URL || 'https://nutspos.uz';
 
@@ -21,13 +22,14 @@ export async function syncWithServer() {
         const pullData = await pullRes.json();
         
         if (pullData.success && pullData.data) {
-            const { users, branches, categories, suppliers, products, barcodes, customers } = pullData.data;
+            const { users, branches, categories, suppliers, products, barcodes, customers, shifts = [], orders = [], orderItems = [] } = pullData.data;
 
             // Upsert in transactions or sequentially
             for (const item of branches) {
                 await prisma.branch.upsert({ where: { id: item.id }, create: item, update: item });
             }
             for (const item of users) {
+                await resolveUserConflict(item);
                 await prisma.user.upsert({ where: { id: item.id }, create: item, update: item });
             }
             for (const item of categories) {
@@ -37,6 +39,7 @@ export async function syncWithServer() {
                 await prisma.supplier.upsert({ where: { id: item.id }, create: item, update: item });
             }
             for (const item of products) {
+                await resolveProductConflict(item);
                 await prisma.product.upsert({ where: { id: item.id }, create: item, update: item });
             }
             for (const item of customers) {
@@ -45,6 +48,7 @@ export async function syncWithServer() {
             // Barcodes
             for (const item of barcodes) {
                 try {
+                    await resolveBarcodeConflict(item);
                     const productExists = await prisma.product.findUnique({ where: { id: item.productId } });
                     if (productExists) {
                         await prisma.barcode.upsert({ where: { id: item.id }, create: item, update: item });
@@ -52,6 +56,18 @@ export async function syncWithServer() {
                 } catch (e) {
                     console.error('Barcode sync skip error:', e);
                 }
+            }
+            // Shifts
+            for (const item of shifts) {
+                await prisma.shift.upsert({ where: { id: item.id }, create: item, update: item });
+            }
+            // Orders
+            for (const item of orders) {
+                await prisma.order.upsert({ where: { id: item.id }, create: item, update: item });
+            }
+            // OrderItems
+            for (const item of orderItems) {
+                await prisma.orderItem.upsert({ where: { id: item.id }, create: item, update: item });
             }
 
             await updateSetting('LAST_SYNC_PULL_TIME', new Date().toISOString());

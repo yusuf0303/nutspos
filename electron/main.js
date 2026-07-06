@@ -5,6 +5,8 @@ const http = require('http');
 const net = require('net');
 const { spawn } = require('child_process');
 
+const SYNC_SERVER_URL = process.env.SYNC_SERVER_URL || 'https://nutspos.uz';
+
 // Log fayli yozuvchi
 function getLogPath() {
   return path.join(app.getPath('userData'), 'app.log');
@@ -72,7 +74,7 @@ function setupDatabase() {
 }
 
 // 3. Wait for the Next.js server to be active on the given port
-function waitForServer(port, timeoutMs = 20000) {
+function waitForServer(port, timeoutMs = 45000) {
   return new Promise((resolve, reject) => {
     const startTime = Date.now();
     const interval = setInterval(() => {
@@ -122,8 +124,10 @@ function startNextServer(port) {
       NODE_ENV: 'production',
       DATABASE_URL: process.env.DATABASE_URL, // main.js setupDatabase() tomonidan o'rnatilgan
       AUTH_SECRET: process.env.AUTH_SECRET || 'my-super-secret-auth-key-12345',
-      AUTH_URL: `http://127.0.0.1:${port}/api/auth`, // next-auth uchun to'g'ri URL
-      NEXTAUTH_URL: `http://127.0.0.1:${port}`, // next-auth v4 va server actions uchun
+      AUTH_URL: `http://127.0.0.1:${port}`, // next-auth v5 uchun to'g'ri URL
+      NEXTAUTH_URL: `http://127.0.0.1:${port}`, // orqaga moslik uchun
+      AUTH_TRUST_HOST: 'true', // next-auth v5 da localhost dan tashqari hostlar uchun majburiy
+      SYNC_SERVER_URL: SYNC_SERVER_URL, // Bulut server bilan sinxronlash uchun
     };
 
     log('Spawning Next.js with node:', nodeBin);
@@ -188,7 +192,44 @@ function createWindow(port) {
   });
 }
 
-// 6. Electron Application Lifecycle
+// 6. Ishga tushganda serverdan to'liq ma'lumot tortish
+async function initialSyncFromServer(port) {
+  try {
+    log('Starting initial sync from cloud server...');
+    // Epoch vaqtidan boshlab sync = barcha ma'lumotlarni tortish
+    const res = await fetch(`${SYNC_SERVER_URL}/api/sync/pull?lastSync=1970-01-01T00:00:00.000Z`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(15000), // 15 soniya kutamiz
+    });
+
+    if (!res.ok) {
+      log('Initial sync failed with status:', res.status);
+      return;
+    }
+
+    const data = await res.json();
+    if (data.success) {
+      log('Initial sync successful. Applying data to local DB...');
+      // Ma'lumotlarni lokal bazaga yozish uchun push endpoint ga yuklaymiz
+      const applyRes = await fetch(`http://127.0.0.1:${port}/api/sync/apply-initial`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data.data),
+        signal: AbortSignal.timeout(30000),
+      });
+      if (applyRes.ok) {
+        log('Initial data applied successfully.');
+      } else {
+        log('Apply initial data failed:', applyRes.status);
+      }
+    }
+  } catch (err) {
+    log('Initial sync error (non-fatal):', err.message);
+  }
+}
+
+// 7. Electron Application Lifecycle
 app.whenReady().then(async () => {
   setupDatabase();
   log('App ready. userData:', app.getPath('userData'));
@@ -199,16 +240,26 @@ app.whenReady().then(async () => {
   try {
     await startNextServer(port);
     log('Next.js server started successfully on port', port);
+    // Oyna ochilishidan OLDIN serverdan ma'lumotlarni tortib olamiz
+    await initialSyncFromServer(port);
     createWindow(port);
   } catch (error) {
     log('ERROR starting server:', error.message);
-    dialog.showErrorBox(
-      'Serverni ishga tushirib bo\'lmadi',
-      `Xatolik: ${error.message}\n\nLog fayl: ${getLogPath()}`
-    );
-    app.quit();
+    // Timeout bo'lsa ham, dastur ishlayotgan bo'lishi mumkin - oynani ochamiz
+    if (error.message.includes('timed out')) {
+      log('Timeout warning, trying initial sync then opening window...');
+      await initialSyncFromServer(port).catch(() => {});
+      createWindow(port);
+    } else {
+      dialog.showErrorBox(
+        'Serverni ishga tushirib bo\'lmadi',
+        `Xatolik: ${error.message}\n\nLog fayl: ${getLogPath()}`
+      );
+      app.quit();
+    }
   }
 });
+
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

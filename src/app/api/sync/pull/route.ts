@@ -8,14 +8,17 @@ export async function GET(request: Request) {
         const syncDate = lastSync ? new Date(lastSync) : new Date(0);
         const isFirstSync = syncDate.getTime() === 0;
 
-        // Fetch master data that changed since lastSync
-        const [users, branches, categories, suppliers, products, customers] = await Promise.all([
+        // Fetch master and transactional data that changed since lastSync
+        const [users, branches, categories, suppliers, products, customers, shifts, orders, orderItems] = await Promise.all([
             prisma.user.findMany({ where: { updatedAt: { gt: syncDate } } }),
             prisma.branch.findMany({ where: { updatedAt: { gt: syncDate } } }),
             prisma.category.findMany({ where: { updatedAt: { gt: syncDate } } }),
             prisma.supplier.findMany({ where: { updatedAt: { gt: syncDate } } }),
             prisma.product.findMany({ where: { updatedAt: { gt: syncDate } } }),
-            prisma.customer.findMany({ where: { updatedAt: { gt: syncDate } } })
+            prisma.customer.findMany({ where: { updatedAt: { gt: syncDate } } }),
+            prisma.shift.findMany({ where: { updatedAt: { gt: syncDate } } }),
+            prisma.order.findMany({ where: { updatedAt: { gt: syncDate } } }),
+            prisma.orderItem.findMany({ where: { updatedAt: { gt: syncDate } } })
         ]);
 
         // Barcodelar: faqat sinxronlangan produktlarga tegishli barcodelarni yuboramiz.
@@ -42,7 +45,10 @@ export async function GET(request: Request) {
                 suppliers,
                 products,
                 barcodes,
-                customers
+                customers,
+                shifts,
+                orders,
+                orderItems
             },
             timestamp: new Date().toISOString()
         });

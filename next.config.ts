@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   output: "standalone",
+  serverExternalPackages: ['@prisma/client', 'bcryptjs'],
   allowedDevOrigins: ['192.168.199.106'],
 };
 

@@ -18,6 +18,15 @@ copyDir('.next/static', '.next/standalone/.next/static');
 // Prisma schema faylini nusxalash (Query engine uni shu yerdan qidiradi)
 copyDir('prisma', '.next/standalone/prisma');
 
+// serverExternalPackages uchun modullarni qo'lda nusxalash
+copyDir('node_modules/@prisma', '.next/standalone/node_modules/@prisma');
+copyDir('node_modules/.prisma', '.next/standalone/node_modules/.prisma');
+copyDir('node_modules/bcryptjs', '.next/standalone/node_modules/bcryptjs');
+
+// Turbopack hashed modul xatosini to'g'rilash:
+copyDir('node_modules/@prisma/client', '.next/standalone/node_modules/@prisma/client-2c3a283f134fdcb6');
+copyDir('node_modules/bcryptjs', '.next/standalone/node_modules/bcryptjs-ee66c2bdc904f2cf');
+
 // DATABASE_URL ni standalone .env dan olib tashlaymiz.
 // Chunki main.js uni dinamik ravishda to'g'ri mutlaq yo'l bilan o'rnatadi.
 // Aks holda, nisbiy "file:./dev.db" yo'li main.js ni ustini yopib, xato chiqaradi.
